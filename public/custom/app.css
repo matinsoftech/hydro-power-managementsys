@@ -1,0 +1,90 @@
+.form-bottom-primary{
+    border-bottom: 2px solid blueviolet;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    position: relative;
+}
+
+.text-label{
+    font-weight: 500;
+    padding: 5px 0px;
+    color: #0aa1aa;
+}
+
+.card-title{
+    color : #057ef7 !important;
+}
+
+.float-right{
+    float: right;
+}
+
+.btn-primary{
+    color: #ffffff;
+    background-color: #0aa1aa;
+    border-radius: 10px;
+}
+
+.btn-danger{
+    color: #ffffff;
+    background-color: #e84b53;
+    border-radius: 10px;
+}
+
+.btn-nav-primary{
+    color: #ffffff;
+    background-color: #d01dec;
+    border-radius: 5px;
+    padding: 5px 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.btn-nav-primary:hover{
+    color: #ffffff;
+    background-color: #9023a1;
+    border-radius: 5px;
+    padding: 5px 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.btn-nav-primary.active{
+    color: #ffffff;
+    background-color: #9023a1;
+    border-radius: 5px;
+    padding: 5px 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.text-red{
+    color: red;
+}
+
+.avatar-icon{
+    position: absolute;
+    font-size: 40px;
+    color: blueviolet;
+    margin-left: -20px;
+}
+
+.avatar {
+    object-fit: cover;
+    width: 200px; /* Adjust the width as needed */
+    height: 200px; /* Adjust the height as needed */
+}
+
+.site-logo{
+    width: 200px;
+    height: 100px;
+}
+
+.p-10{
+    padding: 10px 10px;
+}
+
+.mt-10{
+    margin-top: 10px;
+}
