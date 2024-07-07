@@ -22,7 +22,7 @@ class UserController extends Controller
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
                                 <a class="btn btn-sm btn-primary" href="'.route('admin.user.edit',$row->id).'"><i class="fa fa-edit"></i></a>
-                                <a class="btn btn-sm btn-danger" href="#" url="'.route('admin.user.destroy',$row->id).'"><i class="fa fa-x"></i></a>
+                                <button class="btn btn-sm btn-danger btnDelete" data-url="'.route('admin.user.destroy',$row->id).'"><i class="fa fa-x"></i></button>
                             </div>';
                 })
                 ->rawColumns(['action'])
@@ -63,6 +63,6 @@ class UserController extends Controller
             return response(['status' => false, 'message' => 'Admin user can not be deleted']);
         }
         $user->delete();
-        return response(['status' => true, 'message' => 'User Deleted Successfully']);
+        return response(['status' => true, 'message' => 'User Deleted Successfully','url'=>route('admin.user.index')]);
     }
 }

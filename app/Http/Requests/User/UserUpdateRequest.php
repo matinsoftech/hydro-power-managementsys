@@ -22,7 +22,7 @@ class UserUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => [
                 'required',
@@ -30,8 +30,13 @@ class UserUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($this->user->id),
             ],
-            'password' => 'nullable|string|min:8',
-            'password_confirmation' => 'nullable|same:password',
         ];
+
+        if ($this->filled('password')) {
+            $rules['password'] = 'sometimes|string|min:8';
+            $rules['password_confirmation'] = 'sometimes|same:password';
+        }
+
+        return $rules;
     }
 }

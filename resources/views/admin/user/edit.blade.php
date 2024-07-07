@@ -19,6 +19,7 @@
                             <div class="card-body">
                                 <form id="addData" action="{{ route('admin.user.update', $user->id) }}" method="POST">
                                     @csrf
+                                    @method('PATCH')
 
                                     <div class="row">
                                         <div class="col-sm-6">
