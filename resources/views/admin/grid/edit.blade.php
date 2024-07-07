@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users')
+@section('title', 'Edit Grid')
 
 @section('content')
 
@@ -12,45 +12,37 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Edit User</h4>
+                        <h4 class="card-title">Edit Grid
+                            <a href="{{ route('admin.grid.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
+                        </h4>
                         <div class="card card-primary">
-                            <div class="card-header pb-0">
-                                <h3>Add User</h3>
-                                <div class="card-header-right">
-                                    <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary">User List</a>
-                                </div>
-                            </div>
                             <div class="card-body">
-                                <form id="addData" action="{{ route('admin.user.update', $grid->id) }}" method="POST">
+                                <form id="addData" action="{{ route('admin.grid.update', $grid->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     @method('PATCH')
-
                                     <div class="row">
                                         <div class="col-sm-6">
-                                            <label>Name</label>
-                                            <input type="text" name="name" class="form-control"
-                                                value="{{ $user->name }}" />
-                                            <span id="error_name"></span>
+                                            <label>Gone Time</label>
+                                            <input type="time" name="gone_time" class="form-control" value="{{ \Carbon\Carbon::parse($grid->gone_time)->format('H:i') }}" />
+                                            <span id="error_gone_time"></span>
                                         </div>
                                         <div class="col-sm-6">
-                                            <label>Email Address</label>
-                                            <input type="text" name="email" class="form-control"
-                                                value="{{ $user->email }}" />
-                                            <span id="error_email"></span>
-                                        </div>
-
-                                        <div class="col-sm-6">
-                                            <label>Password</label>
-                                            <input type="password" name="password" class="form-control" />
-                                            <span id="error_password"></span>
+                                            <label>Charge Time</label>
+                                            <input type="time" name="charge_time" class="form-control" value="{{ \Carbon\Carbon::parse($grid->charge_time)->format('H:i') }}" />
+                                            <span id="error_charge_time"></span>
                                         </div>
                                         <div class="col-sm-6">
-                                            <label>Confirm Password</label>
-                                            <input type="password" name="password_confirmation" class="form-control" />
-                                            <span id="error_password_confirmation"></span>
+                                            <label>Unit 1 Sync Time</label>
+                                            <input type="time" name="unit_one_sync_time" class="form-control" value="{{ \Carbon\Carbon::parse($grid->unit_one_sync_time)->format('H:i') }}" />
+                                            <span id="error_unit_one_sync_time"></span>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label>Unit 2 Sync Time</label>
+                                            <input type="time" name="unit_two_sync_time" class="form-control" value="{{ \Carbon\Carbon::parse($grid->unit_two_sync_time)->format('H:i') }}" />
+                                            <span id="error_unit_two_sync_time"></span>
                                         </div>
                                         <div class="col-sm-12">
-                                            <button class="btn btn-sm btn-primary float-right p-10 mt-10">Update</button>
+                                            <button class="btn btn-sm btn-primary float-right p-10 mt-10">Create</button>
                                         </div>
                                     </div>
                                 </form>
@@ -84,12 +76,9 @@
                 success: function(data) {
                     if (data.status == true) {
                         toastr['success'](data.message);
-
-                        $('#addData')[0].reset();
                         window.location.href = data.url;
                     } else {
                         toastr['error'](data.message);
-
                     }
                 },
                 error: function(xhr) {

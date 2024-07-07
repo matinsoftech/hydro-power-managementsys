@@ -10,16 +10,16 @@ class Grid extends Model
     use HasFactory;
 
     protected $fillable = [
-        'fault_time',
-        'reason',
-        'photo',
-        'video',
-        'status',
-        'solved_by',
+        'date',
+        'gone_time',
+        'charge_time',
+        'unit_one_sync_time',
+        'unit_two_sync_time',
+        'created_by',
     ];
 
-    public function solvedBy()
+    public function createdBy()
     {
-        return $this->belongsTo(User::class,'solved_by');
+        return $this->belongsTo(User::class,'created_by');
     }
 }

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users')
+@section('title', 'Edit User')
 
 @section('content')
 
@@ -12,33 +12,25 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Edit User</h4>
+                        <h4 class="card-title">Edit User
+                            <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
+                        </h4>
                         <div class="card card-primary">
-                            <div class="card-header pb-0">
-                                <h3>Add User</h3>
-                                <div class="card-header-right">
-                                    <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary">User List</a>
-                                </div>
-                            </div>
                             <div class="card-body">
                                 <form id="addData" action="{{ route('admin.user.update', $user->id) }}" method="POST">
                                     @csrf
-                                    @method('PATCH')
 
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <label>Name</label>
-                                            <input type="text" name="name" class="form-control"
-                                                value="{{ $user->name }}" />
+                                            <input type="text" name="name" class="form-control" value="{{ $user->name }}" />
                                             <span id="error_name"></span>
                                         </div>
                                         <div class="col-sm-6">
                                             <label>Email Address</label>
-                                            <input type="text" name="email" class="form-control"
-                                                value="{{ $user->email }}" />
+                                            <input type="text" name="email" class="form-control" value="{{ $user->email }}" />
                                             <span id="error_email"></span>
                                         </div>
-
                                         <div class="col-sm-6">
                                             <label>Password</label>
                                             <input type="password" name="password" class="form-control" />
@@ -84,12 +76,9 @@
                 success: function(data) {
                     if (data.status == true) {
                         toastr['success'](data.message);
-
-                        $('#addData')[0].reset();
                         window.location.href = data.url;
                     } else {
                         toastr['error'](data.message);
-
                     }
                 },
                 error: function(xhr) {

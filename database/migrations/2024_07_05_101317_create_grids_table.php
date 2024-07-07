@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('grids', function (Blueprint $table) {
             $table->id();
-            $table->time('fault_time');
-            $table->string('reason');
-            $table->longText('photo')->nullable();
-            $table->longText('video')->nullable();
-            $table->enum('status',['Solved','Unsolved'])->default('Unsolved');
-            $table->unsignedBigInteger('solved_by');
+            $table->date('date');
+            $table->time('gone_time');
+            $table->time('charge_time')->nullable();
+            $table->time('unit_one_sync_time')->nullable();
+            $table->time('unit_two_sync_time')->nullable();
+            $table->unsignedBigInteger('created_by');
             $table->timestamps();
 
-            $table->foreign('solved_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

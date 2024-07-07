@@ -22,12 +22,10 @@ class GridStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'fault_time' => 'required|date_format:H:i',
-            'reason' => 'required|string|max:255',
-            'photo' => 'nullable|file|mimes:jpg,png,jpeg|max:2048', // Assuming photo is an image file
-            'video' => 'nullable|file|mimes:mp4,avi,mov|max:10240', // Assuming video is a video file
-            'status' => 'required|in:Solved,Unsolved',
-            'solved_by' => 'required|exists:users,id',
+            'gone_time' => 'required|date_format:H:i',
+            'charge_time' => 'nullable|date_format:H:i',
+            'unit_one_sync_time' => 'nullable|date_format:H:i',
+            'unit_two_sync_time' => 'nullable|date_format:H:i',
         ];
     }
 }

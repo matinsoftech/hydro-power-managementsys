@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users')
+@section('title', 'Create Grid')
 
 @section('content')
 
@@ -21,43 +21,24 @@
                                     @csrf
                                     <div class="row">
                                         <div class="col-sm-6">
-                                            <label>Fault Time</label>
-                                            <input type="time" name="fault_time" class="form-control" />
-                                            <span id="error_fault_time"></span>
+                                            <label>Gone Time</label>
+                                            <input type="time" name="gone_time" class="form-control" />
+                                            <span id="error_gone_time"></span>
                                         </div>
                                         <div class="col-sm-6">
-                                            <label>Reason</label>
-                                            <input type="text" name="reason" class="form-control" />
-                                            <span id="error_reason"></span>
+                                            <label>Charge Time</label>
+                                            <input type="time" name="charge_time" class="form-control" />
+                                            <span id="error_charge_time"></span>
                                         </div>
                                         <div class="col-sm-6">
-                                            <label>Photo</label>
-                                            <input type="file" name="photo" class="form-control" />
-                                            <span id="error_photo"></span>
+                                            <label>Unit 1 Sync Time</label>
+                                            <input type="time" name="unit_one_sync_time" class="form-control" />
+                                            <span id="error_unit_one_sync_time"></span>
                                         </div>
                                         <div class="col-sm-6">
-                                            <label>Video</label>
-                                            <input type="file" name="video" class="form-control" />
-                                            <span id="error_video"></span>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <label>Status</label>
-                                            <select name="status" class="form-control">
-                                                <option value="">Select Status</option>
-                                                <option value="Solved">Solved</option>
-                                                <option value="Unsolved">Unsolved</option>
-                                            </select>
-                                            <span id="error_status"></span>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <label>Solved By</label>
-                                            <select name="solved_by" class="form-control" >
-                                                <option value="">Select Solved By</option>
-                                                @foreach ($users as $user)
-                                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <span id="error_solved_by"></span>
+                                            <label>Unit 2 Sync Time</label>
+                                            <input type="time" name="unit_two_sync_time" class="form-control" />
+                                            <span id="error_unit_two_sync_time"></span>
                                         </div>
                                         <div class="col-sm-12">
                                             <button class="btn btn-sm btn-primary float-right p-10 mt-10">Create</button>

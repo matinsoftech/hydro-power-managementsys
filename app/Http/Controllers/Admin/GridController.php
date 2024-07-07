@@ -22,16 +22,8 @@ class GridController extends Controller
             $query = Grid::query();
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->editColumn('photo', function ($row) {
-                    if(!$row->photo) return 'No image';
-                    return '<img src="'.asset($row->photo).'" width="50" height="50"/>';
-                })
-                ->editColumn('video', function ($row) {
-                    if(!$row->video) return 'No video';
-                    return '<video width="50" height="50" controls><source src="'.asset($row->video).'" type="video/mp4"></video>';
-                })
-                ->editColumn('solved_by',function ($row){
-                    return $row->solvedBy->name ?? 'No user';
+                ->editColumn('created_by',function ($row){
+                    return $row->createdBy->name ?? 'No user';
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
@@ -39,7 +31,7 @@ class GridController extends Controller
                                 <button class="btn btn-sm btn-danger btnDelete"  data-url="'.route('admin.grid.destroy',$row->id).'"><i class="fa fa-x"></i></button>
                             </div>';
                 })
-                ->rawColumns(['photo','video','solved_by','action'])
+                ->rawColumns(['action'])
                 ->make(true);
         }
         return view('admin.grid.index');
@@ -50,30 +42,21 @@ class GridController extends Controller
      */
     public function create()
     {
-        $users = User::all();
-        return view('admin.grid.create',compact('users'));
+        return view('admin.grid.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    protected function prepareData(array $validatedData)
+    {
+        return array_merge($validatedData, [
+            'created_by' => auth()->id(),
+            'date' => now()->toDateString(),
+        ]);
+    }
+
     public function store(GridStoreRequest $request)
     {
-        $data = $request->validated();
-        if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
+        $data = $this->prepareData($request->validated());
 
-            $file->storeAs('users/photos', $fileName, 'public');
-            $data['photo'] = 'storage/users/photos/' . $fileName;
-        }
-        if ($request->hasFile('video')) {
-            $file = $request->file('video');
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
-
-            $file->storeAs('users/videos', $fileName, 'public');
-            $data['video'] = 'storage/users/videos/' . $fileName;
-        }
         Grid::create($data);
         return response(['status' => true, 'message' => 'Grid added successfully','url'=>route('admin.grid.index')]);
     }
@@ -91,8 +74,7 @@ class GridController extends Controller
      */
     public function edit(Grid $grid)
     {
-        $users = User::all();
-        return view('admin.grid.edit',compact('grid','users'));
+        return view('admin.grid.edit',compact('grid'));
     }
 
     /**
@@ -100,21 +82,7 @@ class GridController extends Controller
      */
     public function update(GridUpdateRequest $request, Grid $grid)
     {
-        $data = $request->validated();
-        if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
-
-            $file->storeAs('users/photos', $fileName, 'public');
-            $data['photo'] = 'storage/users/photos/' . $fileName;
-        }
-        if ($request->hasFile('video')) {
-            $file = $request->file('video');
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
-
-            $file->storeAs('users/videos', $fileName, 'public');
-            $data['video'] = 'storage/users/videos/' . $fileName;
-        }
+        $data = $this->prepareData($request->validated());
         $grid->update($data);
         return response(['status' => true, 'message' => 'Grid updated successfully','url'=>route('admin.grid.index')]);
     }

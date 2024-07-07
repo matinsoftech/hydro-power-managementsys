@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users')
+@section('title', 'Grid List')
 
 @section('content')
 
@@ -21,12 +21,12 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Fault Time</th>
-                                        <th>Reason</th>
-                                        <th>Photo</th>
-                                        <th>Video</th>
-                                        <th>Status</th>
-                                        <th>Solved By</th>
+                                        <th>Date</th>
+                                        <th>Gone Time</th>
+                                        <th>Charge Time</th>
+                                        <th>Unit One Sync Time</th>
+                                        <th>Unit Two Sync Time</th>
+                                        <th>Entry By</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -91,28 +91,28 @@
                     searchable: false
                 },
                 {
-                    name: "fault_time",
-                    data: "fault_time"
+                    name: "date",
+                    data: "date"
                 },
                 {
-                    name: "reason",
-                    data: "reason"
+                    name: "gone_time",
+                    data: "gone_time"
                 },
                 {
-                    name: "photo",
-                    data: "photo"
+                    name: "charge_time",
+                    data: "charge_time"
                 },
                 {
-                    name: "video",
-                    data: "video"
+                    name: "unit_one_sync_time",
+                    data: "unit_one_sync_time"
                 },
                 {
-                    name: "status",
-                    data: "status"
+                    name: "unit_two_sync_time",
+                    data: "unit_two_sync_time"
                 },
                 {
-                    name: "solved_by",
-                    data: "solved_by"
+                    name: "created_by",
+                    data: "created_by"
                 },
                 {
                     name: "action",
