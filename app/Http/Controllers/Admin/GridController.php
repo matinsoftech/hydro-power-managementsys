@@ -20,7 +20,7 @@ class GridController extends Controller
     {
         if ($request->ajax()) {
             $query = Grid::query();
-            return DataTables::of($query)
+            return DataTables::of($query->with('createdBy'))
                 ->addIndexColumn()
                 ->editColumn('created_by',function ($row){
                     return $row->createdBy->name ?? 'No user';

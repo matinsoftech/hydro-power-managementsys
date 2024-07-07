@@ -67,11 +67,22 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255',
             'password' => 'sometimes|string|min:6',
             'confirm_password' => 'sometimes|same:password',
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $user = User::find(Auth::user()->id);
 
-        $user->update($request->all());
+        // Use the UploadImageTrait to get image paths
+        $imagePaths = $this->uploadImage($request, ['avatar'], 'users');
+
+        // Update the user model with the request data and image paths
+        $user->update(array_merge($request->except('avatar'), $imagePaths));
+
+        if (!empty($imagePaths)) {
+            $user->imageGallery()->createMany([
+                ['image_path' => $imagePaths['avatar']],
+            ]);
+        }
 
         return response()->json(['success' => true,'message' => 'Profile updated successfully']);
     }

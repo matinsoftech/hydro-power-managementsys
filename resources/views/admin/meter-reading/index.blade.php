@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users')
+@section('title', 'Meter Reading List')
 
 @section('content')
 
@@ -12,16 +12,20 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Users List
-                            <a href="{{ route('admin.user.create') }}" class="btn btn-sm btn-primary float-right">Add User</a>
+                        <h4 class="card-title">Meter Reading List
+                            <a href="{{ route('admin.meter-reading.create') }}" class="btn btn-sm btn-primary float-right">Add Meter Reading</a>
                         </h4>
                         <div class="table-responsive">
                             <table id="myTable" class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Main Meter</th>
+                                        <th>Show Meter</th>
+                                        <th>Remarks</th>
+                                        <th>Entry By</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -33,28 +37,6 @@
                 </div>
             </div>
 
-        </div>
-    </div>
-
-    <div id="deleteModal" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <form id="deleteForm" action="#" method="POST">
-                @method('DELETE')
-                @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Are you sure you want to delete this item?</h5>
-                        <button type="button" class="close btn btn-danger" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </div>
-                </div>
-            </form>
         </div>
     </div>
 @endsection
@@ -77,7 +59,7 @@
                 [10, 25, 50, 100, 250, 500]
             ],
             ajax: {
-                url: "{{ route('admin.user.index') }}",
+                url: "{{ route('admin.meter-reading.index') }}",
             },
             columns: [{
                     name: "DT_RowIndex",
@@ -86,12 +68,28 @@
                     searchable: false
                 },
                 {
-                    name: "name",
-                    data: "name"
+                    name: "date",
+                    data: "date"
                 },
                 {
-                    name: "email",
-                    data: "email"
+                    name: "time",
+                    data: "time"
+                },
+                {
+                    name: "main_meter",
+                    data: "main_meter"
+                },
+                {
+                    name: "show_meter",
+                    data: "show_meter"
+                },
+                {
+                    name: "remarks",
+                    data: "remarks"
+                },
+                {
+                    name: "created_by",
+                    data: "created_by"
                 },
                 {
                     name: "action",
