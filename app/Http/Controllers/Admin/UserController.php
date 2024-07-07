@@ -38,9 +38,8 @@ class UserController extends Controller
 
     public function store(UserStoreRequest $request)
     {
-        $user = User::create($request->validated());
+        User::create($request->validated());
         return response(['status' => true, 'message' => 'User added successfully','url'=>route('admin.user.index')]);
-
     }
 
     public function show(User $user)
