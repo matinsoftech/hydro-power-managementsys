@@ -9,6 +9,7 @@ use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Requests\User\UserUpdateRequest;
+use PDO;
 
 class UserController extends Controller
 {
@@ -59,6 +60,9 @@ class UserController extends Controller
     }
 
     public function destroy(User $user){
+        if($user->user_type == 'Admin'){
+            return response(['status' => false, 'message' => 'Admin user can not be deleted']);
+        }
         $user->delete();
         return response(['status' => true, 'message' => 'User Deleted Successfully']);
     }
