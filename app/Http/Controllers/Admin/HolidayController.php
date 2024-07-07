@@ -29,6 +29,10 @@ class HolidayController extends Controller
                     ->where('end_date', '>', $end);
             })->get(['id','title', 'start_date as start', 'end_date as end']);
 
+            foreach ($holidays as $holiday) {
+                $holiday->end = \Carbon\Carbon::parse($holiday->end)->addDay()->format('Y-m-d');
+            }
+
             return response()->json($holidays);
         }
         return view('admin.holiday.index');

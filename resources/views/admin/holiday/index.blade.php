@@ -26,12 +26,36 @@
 
         </div>
     </div>
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete Holiday</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this holiday?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 @section('scripts')
     <script src="{{ asset('assets/libs/moment/min/moment.min.js') }}" ></script>
     <script src="{{ asset('assets/libs/fullcalendar/dist/fullcalendar.min.js') }}" ></script>
     <script>
         $(function(){
+            let eventToDelete;
+
             $('#calendar').fullCalendar({
                 header: {
                     left: 'prev,next today',
@@ -58,6 +82,9 @@
                             callback(data);
                         }
                     });
+                },
+                eventRender: function(event, element) {
+                    element.find('.fc-title').append('<span class="delete-icon" style="cursor:pointer; float:right;">&times;</span>');
                 }
             });
 
@@ -79,6 +106,33 @@
                     }
                 });
             }
+        });
+
+        $(document).on('click', '.delete-icon', function() {
+            // Get the event data
+            eventToDelete = $('#calendar').fullCalendar('clientEvents', $(this).closest('.fc-event').data('event-id'))[0];
+            // Open the modal
+            $('#deleteModal').modal('show');
+        });
+
+        $('#confirmDelete').on('click', function() {
+            // Perform the delete action via AJAX
+            $.ajax({
+                url: '/admin/holiday/' + eventToDelete.id,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    // Close the modal
+                    $('#deleteModal').modal('hide');
+                    // Remove the event from the calendar
+                    $('#calendar').fullCalendar('removeEvents', eventToDelete.id);
+                },
+                error: function(xhr, status, error) {
+                    alert('There was an error deleting the event.');
+                }
+            });
         });
     </script>
 @endsection
