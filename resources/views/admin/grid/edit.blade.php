@@ -42,7 +42,7 @@
                                             <span id="error_unit_two_sync_time"></span>
                                         </div>
                                         <div class="col-sm-12">
-                                            <button class="btn btn-sm btn-primary float-right p-10 mt-10">Create</button>
+                                            <button class="btn btn-sm btn-primary float-right p-10 mt-10">Update</button>
                                         </div>
                                     </div>
                                 </form>
