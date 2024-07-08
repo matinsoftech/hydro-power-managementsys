@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\User;
 
 use App\Models\User;
 use App\Models\Fault;
@@ -13,9 +13,6 @@ use App\Http\Requests\Fault\FaultUpdateRequest;
 
 class FaultController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -35,14 +32,14 @@ class FaultController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
-                                <a class="btn btn-sm btn-primary" href="'.route('admin.fault.edit',$row->id).'"><i class="fa fa-edit"></i></a>
-                                <button class="btn btn-sm btn-danger btnDelete"  data-url="'.route('admin.fault.destroy',$row->id).'"><i class="fa fa-x"></i></button>
+                                <a class="btn btn-sm btn-primary" href="'.route('user.fault.edit',$row->id).'"><i class="fa fa-edit"></i></a>
+                                <button class="btn btn-sm btn-danger btnDelete"  data-url="'.route('user.fault.destroy',$row->id).'"><i class="fa fa-x"></i></button>
                             </div>';
                 })
                 ->rawColumns(['photo','video','solved_by','action'])
                 ->make(true);
         }
-        return view('admin.fault.index');
+        return view('user.fault.index');
     }
 
     /**
@@ -51,7 +48,7 @@ class FaultController extends Controller
     public function create()
     {
         $users = User::all();
-        return view('admin.fault.create',compact('users'));
+        return view('user.fault.create',compact('users'));
     }
 
     /**
@@ -75,7 +72,7 @@ class FaultController extends Controller
             $data['video'] = 'storage/users/videos/' . $fileName;
         }
         Fault::create($data);
-        return response(['status' => true, 'message' => 'Fault added successfully','url'=>route('admin.fault.index')]);
+        return response(['status' => true, 'message' => 'Fault added successfully','url'=>route('user.fault.index')]);
     }
 
     /**
@@ -83,7 +80,7 @@ class FaultController extends Controller
      */
     public function show(Fault $fault)
     {
-        return view('admin.fault.show',compact('fault'));
+        return view('user.fault.show',compact('fault'));
     }
 
     /**
@@ -92,7 +89,7 @@ class FaultController extends Controller
     public function edit(Fault $fault)
     {
         $users = User::all();
-        return view('admin.fault.edit',compact('fault','users'));
+        return view('user.fault.edit',compact('fault','users'));
     }
 
     /**
@@ -116,7 +113,7 @@ class FaultController extends Controller
             $data['video'] = 'storage/users/videos/' . $fileName;
         }
         $fault->update($data);
-        return response(['status' => true, 'message' => 'Fault updated successfully','url'=>route('admin.fault.index')]);
+        return response(['status' => true, 'message' => 'Fault updated successfully','url'=>route('user.fault.index')]);
     }
 
     /**
@@ -125,6 +122,6 @@ class FaultController extends Controller
     public function destroy(Fault $fault)
     {
         $fault->delete();
-        return response(['status' => true, 'message' => 'Fault deleted successfully','url'=>route('admin.fault.index')]);
+        return response(['status' => true, 'message' => 'Fault deleted successfully','url'=>route('user.fault.index')]);
     }
 }

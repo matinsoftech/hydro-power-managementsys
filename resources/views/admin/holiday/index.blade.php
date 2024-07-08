@@ -92,9 +92,9 @@
                 $.ajax({
                     url: '{{ asset("admin/holiday") }}/' + event.id, // Ensure you have the correct URL structure
                     method: 'PATCH',
-                    data: {
+                data: {
                         start_date: event.start.format(),
-                        end_date: event.end ? event.end.format() : event.start.format(),
+                        end_date: event.end ? event.end.subtract(1, 'days').format('YYYY-MM-DD') : event.start.format('YYYY-MM-DD'),
                         _token: '{{ csrf_token() }}' // Include CSRF token
                     },
                     success: function(response) {
