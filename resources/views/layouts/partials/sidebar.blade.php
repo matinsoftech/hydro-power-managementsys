@@ -8,7 +8,6 @@
                         aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
                             class="hide-menu">Dashboard</span></a></li>
                 <li class="list-divider"></li>
-
                 @if(auth()->user()->user_type == "Admin")
                     @include('layouts.partials._admin_sidebar')
                 @else
