@@ -18,6 +18,9 @@ class FaultController extends Controller
      */
     public function index(Request $request)
     {
+        if($request->is('api/*')){
+            return $this->apiIndex($request);
+        }
         if ($request->ajax()) {
             $query = Fault::query();
             return DataTables::of($query)
@@ -43,6 +46,13 @@ class FaultController extends Controller
                 ->make(true);
         }
         return view('admin.fault.index');
+    }
+
+    public function apiIndex(Request $request)
+    {
+        $query = Fault::query();
+        $data = $query->paginate(20);
+        return response()->json(['data'=>$data]);
     }
 
     /**

@@ -18,6 +18,10 @@ class UserMiddleware
         if(auth()->user()->user_type == 'User') {
             return $next($request);
         }
+
+        if ($request->expectsJson()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
         return redirect()->route('login');
     }
 }

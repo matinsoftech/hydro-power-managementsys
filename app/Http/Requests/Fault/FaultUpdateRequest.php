@@ -26,8 +26,8 @@ class FaultUpdateRequest extends FormRequest
             'reason' => 'sometimes|required|string|max:255',
             'photo' => 'nullable|file|mimes:jpg,png,jpeg|max:2048', // Assuming photo is an image file
             'video' => 'nullable|file|mimes:mp4,avi,mov|max:10240', // Assuming video is a video file
-            'status' => 'sometimes|required|in:Solved,Unsolved',
-            'solved_by' => 'sometimes|required|exists:users,id',
+            'status' => 'required|in:Solved,Unsolved',
+            'solved_by' => 'required_if:status,Solved|exists:users,id',
         ];
     }
 }

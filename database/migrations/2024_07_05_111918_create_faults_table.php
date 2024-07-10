@@ -18,7 +18,7 @@ return new class extends Migration
             $table->longText('photo')->nullable();
             $table->longText('video')->nullable();
             $table->enum('status',['Solved','Unsolved'])->default('Unsolved');
-            $table->unsignedBigInteger('solved_by');
+            $table->unsignedBigInteger('solved_by')->nullable();
             $table->timestamps();
 
             $table->foreign('solved_by')->references('id')->on('users')->onDelete('cascade');
