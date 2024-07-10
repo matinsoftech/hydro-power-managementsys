@@ -8,17 +8,8 @@
                         aria-expanded="false"><i data-feather="home" class="feather-icon"></i><span
                             class="hide-menu">Dashboard</span></a></li>
                 <li class="list-divider"></li>
-                <li class="sidebar-item"> <a class="sidebar-link has-arrow" href="javascript:void(0)"
-                    aria-expanded="false"><i data-feather="users" class="feather-icon"></i><span
-                        class="hide-menu">Manage Users</span></a>
-                    <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                        <li class="sidebar-item"><a href="{{ route('admin.user.index')}}" class="sidebar-link"><span
-                                    class="hide-menu"> Users
-                                </span></a>
-                        </li>
-                    </ul>
-                </li>
 
+<<<<<<<<< Temporary merge branch 1
                 <li class="sidebar-item"> <a class="sidebar-link" href="{{ route('admin.holiday.index') }}"
                         aria-expanded="false"><i data-feather="tag" class="feather-icon"></i><span
                             class="hide-menu">Holiday List
@@ -55,6 +46,13 @@
                     <span class="hide-menu">Stations</span></a></li> --}}
 
                 <li class="list-divider"></li>
+=========
+                @if(auth()->user()->user_type == "Admin")
+                    @include('layouts.partials._admin_sidebar')
+                @else
+                    @include('layouts.partials._user_sidebar')
+                @endif
+>>>>>>>>> Temporary merge branch 2
 
             </ul>
         </nav>
