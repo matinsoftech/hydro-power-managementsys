@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('keywords');
             $table->boolean('mail_enabled')->default(0);
             $table->bigInteger('unit_price')->nullable();
+            $table->decimal('latitude', 11, 8);
+            $table->decimal('longitude', 11, 8);
             $table->timestamps();
         });
     }
