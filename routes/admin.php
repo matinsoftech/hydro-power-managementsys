@@ -8,7 +8,6 @@ use App\Http\Controllers\Admin\HolidayController;
 use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\MeterReadingController;
-use App\Http\Controllers\Admin\StationController;
 
 // Notes: @middleware:admin @prefix:admin @as:admin.
 
@@ -20,7 +19,6 @@ Route::resource('user', UserController::class);
 Route::resource('grid', GridController::class);
 Route::resource('fault', FaultController::class);
 Route::resource('holiday', HolidayController::class);
-Route::resource('station', StationController::class);
 
 Route::resource('meter-reading', MeterReadingController::class);
 Route::get('meter-reading-detail', [MeterReadingController::class, 'detail'])->name('meter-reading.detail');
