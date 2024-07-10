@@ -25,9 +25,9 @@ class MeterReadingStoreRequest extends FormRequest
             'time' => 'required|array',
             'time.*' => 'required|date_format:H:i:s',
             'main_meter' => 'nullable|array',
-            'main_meter.*' => 'nullable|string',
+            'main_meter.*' => 'nullable|numeric',
             'show_meter' => 'nullable|array',
-            'show_meter.*' => 'nullable|string',
+            'show_meter.*' => 'nullable|numeric',
             'remarks' => 'nullable|array',
             'remarks.*' => 'nullable|string',
         ];

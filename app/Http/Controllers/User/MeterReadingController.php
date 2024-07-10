@@ -38,14 +38,14 @@ class MeterReadingController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
-                                <a class="btn btn-sm btn-primary" href="' . route('admin.meter-reading.edit', $row->id) . '"><i class="fa fa-edit"></i></a>
-                                <button class="btn btn-sm btn-danger btnDelete"  data-url="' . route('admin.meter-reading.destroy', $row->id) . '"><i class="fa fa-x"></i></button>
+                                <a class="btn btn-sm btn-primary" href="' . route('user.meter-reading.edit', $row->id) . '"><i class="fa fa-edit"></i></a>
+                                <button class="btn btn-sm btn-danger btnDelete"  data-url="' . route('user.meter-reading.destroy', $row->id) . '"><i class="fa fa-x"></i></button>
                             </div>';
                 })
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        return view('admin.meter-reading.index');
+        return view('user.meter-reading.index');
     }
 
     /**
@@ -54,7 +54,7 @@ class MeterReadingController extends Controller
     public function create()
     {
         $meterReadings = MeterReading::where('date', date('Y-m-d'))->get()->keyBy('time');
-        return view('admin.meter-reading.create', compact('meterReadings'));
+        return view('user.meter-reading.create', compact('meterReadings'));
     }
 
     public function detail(Request $request)
@@ -62,9 +62,9 @@ class MeterReadingController extends Controller
         if($request->date){
             $date = $request->date;
             $meterReadings = MeterReading::where('date', $date)->get()->keyBy('time');
-            return view('admin.meter-reading.detail',compact('meterReadings','date'));
+            return view('user.meter-reading.detail',compact('meterReadings','date'));
         }
-        return view('admin.meter-reading.detail');
+        return view('user.meter-reading.detail');
     }
 
     public function apiDetail(Request $request)
@@ -105,7 +105,7 @@ class MeterReadingController extends Controller
             }
         }
 
-        return response()->json(['status' => true, 'message' => 'Meter readings added successfully', 'url' => route('admin.meter-reading.index')]);
+        return response()->json(['status' => true, 'message' => 'Meter readings added successfully', 'url' => route('user.meter-reading.index')]);
     }
 
     /**
@@ -123,7 +123,7 @@ class MeterReadingController extends Controller
     {
         $date = $meterReading->date;
         $meterReadings = MeterReading::where('date', $date)->get()->keyBy('time');
-        return view('admin.meter-reading.edit', compact('meterReadings','date'));
+        return view('user.meter-reading.edit', compact('meterReadings','date'));
     }
 
     /**
@@ -140,6 +140,6 @@ class MeterReadingController extends Controller
     public function destroy(MeterReading $meterReading)
     {
         $meterReading->delete();
-        return response(['status' => true, 'message' => 'Meter reading deleted successfully', 'url' => route('admin.meter-reading.index')]);
+        return response(['status' => true, 'message' => 'Meter reading deleted successfully', 'url' => route('user.meter-reading.index')]);
     }
 }
