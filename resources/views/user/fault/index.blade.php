@@ -14,7 +14,7 @@
                     <div class="card-body">
                         <h4 class="card-title">
                             Fault List
-                            <a href="{{ route('admin.fault.create') }}" class="btn btn-sm btn-primary float-right">Add Fault</a>
+                            <a href="{{ route('user.fault.create') }}" class="btn btn-sm btn-primary float-right">Add Fault</a>
                         </h4>
                         <div class="table-responsive">
                             <table id="myTable" class="table table-striped table-bordered">
@@ -82,7 +82,7 @@
                 [10, 25, 50, 100, 250, 500]
             ],
             ajax: {
-                url: "{{ route('admin.fault.index') }}",
+                url: "{{ route('user.fault.index') }}",
             },
             columns: [{
                     name: "DT_RowIndex",
