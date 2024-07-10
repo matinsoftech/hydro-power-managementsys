@@ -25,6 +25,8 @@ Route::middleware('auth:sanctum')->group(function(){
     });
 
     Route::middleware('user')->prefix('user')->group(function () {
+        Route::get('analytics-data', [\App\Http\Controllers\User\AnalyticsController::class, 'index'])->name('user.analytics.index');
+        Route::get('entry-sys', [\App\Http\Controllers\User\EntrySysController::class, 'apiIndex'])->name('user.entry-sys.index');
         Route::apiResource('grid', \App\Http\Controllers\User\GridController::class);
         Route::apiResource('fault', \App\Http\Controllers\User\FaultController::class);
         Route::apiResource('holiday', \App\Http\Controllers\User\HolidayController::class);
