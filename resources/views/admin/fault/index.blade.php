@@ -14,7 +14,7 @@
                     <div class="card-body">
                         <h4 class="card-title">
                             Fault List
-                            <a href="{{ route('admin.fault.create') }}" class="btn btn-sm btn-primary float-right">Add Fault</a>
+                            <a href="{{ route('admin.grid.create') }}" class="btn btn-sm btn-primary float-right">Add Fault</a>
                         </h4>
                         <div class="table-responsive">
                             <table id="myTable" class="table table-striped table-bordered">

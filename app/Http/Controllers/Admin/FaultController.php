@@ -35,7 +35,7 @@ class FaultController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
-                                <a class="btn btn-sm btn-primary" href="'.route('admin.fault.edit',$row->id).'"><i class="fa fa-edit"></i></a>
+                                <a class="btn btn-sm btn-primary" href="'.route('admin.falut.edit',$row->id).'"><i class="fa fa-edit"></i></a>
                                 <button class="btn btn-sm btn-danger btnDelete"  data-url="'.route('admin.fault.destroy',$row->id).'"><i class="fa fa-x"></i></button>
                             </div>';
                 })
