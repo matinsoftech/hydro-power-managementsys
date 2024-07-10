@@ -2,6 +2,17 @@
 
 @section('title','Dashboard')
 
+@section('styles')
+<style>
+    .btn-lg-circle{
+        height: 250px;
+        width: 250px;
+        border-radius: 100%;
+        font-size: xx-large;
+    }
+</style>
+@endsection
+
 @section('content')
     <div class="page-breadcrumb">
         <div class="row">
@@ -122,26 +133,10 @@
         <div class="row">
             <div class="col-lg-4 col-md-12">
                 <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Total Sales</h4>
-                        <div id="campaign-v2" class="mt-2" style="height:283px; width:100%;"></div>
-                        <ul class="list-style-none mb-0">
-                            <li>
-                                <i class="fas fa-circle text-primary font-10 me-2"></i>
-                                <span class="text-muted">Direct Sales</span>
-                                <span class="text-dark float-end font-weight-medium">$2346</span>
-                            </li>
-                            <li class="mt-3">
-                                <i class="fas fa-circle text-danger font-10 me-2"></i>
-                                <span class="text-muted">Referral Sales</span>
-                                <span class="text-dark float-end font-weight-medium">$2108</span>
-                            </li>
-                            <li class="mt-3">
-                                <i class="fas fa-circle text-cyan font-10 me-2"></i>
-                                <span class="text-muted">Affiliate Sales</span>
-                                <span class="text-dark float-end font-weight-medium">$1204</span>
-                            </li>
-                        </ul>
+                    <div class="card-body text-center">
+                        <button id="checkInOut" class="btn btn-success btn-lg-circle">
+                            Check In
+                        </button>
                     </div>
                 </div>
             </div>
@@ -507,4 +502,31 @@
 <script src="{{ asset('assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js') }}"></script>
 <script src="{{ asset('assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js') }}"></script>
 <script src="{{ asset('dist/js/pages/dashboards/dashboard1.min.js') }}"></script>
+<script>
+    $(function () {
+        $('#checkInOut').on('click', function () {
+            $.ajax({
+                url: "{{ route('user.entry-sys.store') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                },
+                success: function (data) {
+                    if(data.success == true){
+                        if(data.data.check_out_time){
+                            $('#checkInOut').removeClass('btn-danger').addClass('btn-success').text('Check In');
+                        }else{
+                            $('#checkInOut').removeClass('btn-success').addClass('btn-danger').text('Check Out');
+                        }
+                    }else{
+                        toastr.error(data.message);
+                    }
+                },
+                error: function (data) {
+                    console.log(data);
+                }
+            });
+        });
+    });
+</script>
 @endsection
