@@ -11,20 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('site_settings', function (Blueprint $table) {
+        Schema::create('stations', function (Blueprint $table) {
             $table->id();
-            $table->string('logo');
+            $table->enum('station_type',['Sub Station','Sub Sub Station']);
+            $table->unsignedBigInteger('parent_station')->nullable();
             $table->string('name');
-            $table->string('email');
-            $table->string('phone');
-            $table->string('address');
-            $table->string('description');
-            $table->string('keywords');
-            $table->boolean('mail_enabled')->default(0);
-            $table->bigInteger('unit_price')->nullable();
             $table->decimal('latitude', 11, 8);
             $table->decimal('longitude', 11, 8);
+            $table->unsignedBigInteger('created_by');
             $table->timestamps();
+
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -33,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('site_settings');
+        Schema::dropIfExists('stations');
     }
 };
