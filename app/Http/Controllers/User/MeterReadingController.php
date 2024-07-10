@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\User;
 
 use Carbon\Carbon;
 use App\Models\MeterReading;
@@ -12,14 +12,8 @@ use App\Http\Requests\MeterReading\MeterReadingUpdateRequest;
 
 class MeterReadingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-        if($request->is('api/*')) {
-            return $this->apiIndex($request);
-        }
         if ($request->ajax()) {
             $query = MeterReading::query();
             return DataTables::of($query->with('createdBy'))
@@ -48,16 +42,6 @@ class MeterReadingController extends Controller
         }
         return view('admin.meter-reading.index');
     }
-
-
-    public function apiIndex(Request $request)
-    {
-        $query = MeterReading::query();
-        $data = $query->paginate(20);
-        return response()->json(['data'=>$data]);
-    }
-
-
 
     /**
      * Show the form for creating a new resource.

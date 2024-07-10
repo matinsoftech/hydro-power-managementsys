@@ -13,6 +13,9 @@ class HolidayController extends Controller
 {
     public function index(Request $request)
     {
+        if($request->is('api/*')) {
+            return $this->apiIndex($request);
+        }
         if ($request->ajax()) {
             $start = $request->query('start');
             $end = $request->query('end');
@@ -36,6 +39,13 @@ class HolidayController extends Controller
             return response()->json($holidays);
         }
         return view('admin.holiday.index');
+    }
+
+    public function apiIndex(Request $request)
+    {
+        $query = Holiday::query();
+        $data = $query->get();
+        return response()->json(['data'=>$data]);
     }
 
     public function create()

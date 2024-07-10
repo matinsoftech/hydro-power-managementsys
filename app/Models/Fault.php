@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Fault extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'fault_time',
+        'reason',
+        'photo',
+        'video',
+        'status',
+        'solved_by',
+    ];
 }

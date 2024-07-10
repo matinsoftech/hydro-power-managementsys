@@ -27,7 +27,28 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (auth()->attempt($credentials)) {
+
             return response()->json(['success' => true]);
+        }
+        return response()->json(['success' => false,'message' => 'Invalid email or password']);
+    }
+
+    public function attemptApiLogin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+        ]);
+
+        $credentials = $request->only('email', 'password');
+
+        if (auth()->attempt($credentials)) {
+
+            $user = User::find(Auth::user()->id);
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json(['success' => true,'token' => $token , 'user' => $user]);
         }
         return response()->json(['success' => false,'message' => 'Invalid email or password']);
     }
@@ -51,8 +72,11 @@ class AuthController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function logout(){
+    public function logout(Request $request){
         Auth::logout();
+        if ($request->expectsJson()) {
+            return response()->json(['status' => true,'message' => 'Logout successfully'], 200);
+        }
         return redirect()->route('login');
     }
 
@@ -66,7 +90,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
             'password' => 'sometimes|string|min:6',
-            'confirm_password' => 'sometimes|same:password',
+            'confirm_password' => 'required_with:password|same:password',
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -84,7 +108,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json(['success' => true,'message' => 'Profile updated successfully']);
+        return response()->json(['success' => true,'message' => 'Profile updated successfully','user' => $user]);
     }
 
 }

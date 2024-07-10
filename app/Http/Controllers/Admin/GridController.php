@@ -18,6 +18,7 @@ class GridController extends Controller
      */
     public function index(Request $request)
     {
+        if($request->is('api/*')) return $this->apiIndex($request);
         if ($request->ajax()) {
             $query = Grid::query();
             return DataTables::of($query->with('createdBy'))
@@ -35,6 +36,13 @@ class GridController extends Controller
                 ->make(true);
         }
         return view('admin.grid.index');
+    }
+
+    public function apiIndex(Request $request)
+    {
+        $query = Grid::query();
+        $data = $query->paginate(20);
+        return response()->json(['data'=>$data]);
     }
 
     /**

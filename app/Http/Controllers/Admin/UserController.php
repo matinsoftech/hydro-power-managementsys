@@ -15,9 +15,13 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        if($request->is('api/*')) {
+            return $this->apiIndex($request);
+        }
+
         if ($request->ajax()) {
             $query = User::query();
-            return DataTables::of($query)
+            return DataTables::of($query->where('user_type','User'))
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
@@ -29,6 +33,13 @@ class UserController extends Controller
                 ->make(true);
         }
         return view('admin.user.index');
+    }
+
+    public function apiIndex(Request $request)
+    {
+        $query = User::query();
+        $data = $query->where('user_type','User')->get();
+        return response()->json($data);
     }
 
     public function create()
