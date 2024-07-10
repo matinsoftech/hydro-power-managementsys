@@ -1,34 +1,86 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Hydro Station Map</title>
-    <style>
-        #map {
-            height: 100%;
-            width: 100%;
-        }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        .control-panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1;
-            background-color: white;
-            padding: 10px;
-            border: 1px solid #999;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .control-panel input,
-        .control-panel select {
-            margin-bottom: 5px;
-        }
-    </style>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&callback=initMap&libraries=marker" async defer></script>
+@extends('layouts.app')
+
+@section('title', 'Create')
+@section('styles')
+<link rel="stylesheet" type="text/css" href="{{ asset('assets/libs/fullcalendar/dist/fullcalendar.min.css') }}"/>
+<style>
+    .main_div{
+        position: relative;
+    }
+    #map {
+        height: 100%;
+        width: 100%;
+    }
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .control-panel {
+        width: 100%;
+        max-width: 600px;
+        z-index: 1;
+        background-color: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .control-panel input,
+    .control-panel select {
+        margin-bottom: 5px;
+    }
+    .control-panel h3{
+      font-size: 24px;
+      color: #000;
+    }
+
+    .control-panel input,
+    .control-panel select{
+     padding: 10px;
+     width: 100%;
+    }
+    .control-panel label{
+        display: block;
+    }
+</style>
+
+@endsection
+@section('content')
+
+<a href="/admin/station/create" class="add_station_btn btn btn-primary my-4">Add Station</a>
+
+
+<div class="main_div" style="width: 100% ;height: 500px" onload="initMap()">
+    <div id="map"></div>
+</div>
+
+
+<!-- Control panel to add new station -->
+<div class="control-panel d-none">
+            <h3>Add Station</h3>
+            <label for="station-type">Station Type:</label><br>
+            <select id="station-type">
+                <option value="substation">Substation</option>
+                <option value="subsubstation">Sub-substation</option>
+            </select><br>
+            <div id="substation-selection" style="display:none;">
+                <label for="substation-select">Parent Substation:</label><br>
+                <select id="substation-select"></select><br>
+            </div>
+            <label for="location-name">Location Name:</label><br>
+            <input type="text" id="location-name"><br>
+            <label for="latitude">Latitude:</label><br>
+            <input type="text" id="latitude"><br>
+            <label for="longitude">Longitude:</label><br>
+            <input type="text" id="longitude"><br>
+            <button onclick="handleAddStation()">Add Station</button>
+</div>
+
+@endsection
+@section('scripts')
+    <script src="{{ asset('assets/libs/moment/min/moment.min.js') }}" ></script>
+    <script src="{{ asset('assets/libs/fullcalendar/dist/fullcalendar.min.js') }}" ></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&callback=initMap" async defer></script>
     <script>
         var map;
         var rootStation = {lat: 40.730610, lng: -73.935242};
@@ -58,10 +110,10 @@
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 10,
-                    fillColor: '#FF0000',
+                    fillColor: '#ffffff',
                     fillOpacity: 1,
-                    strokeWeight: 2,
-                    strokeColor: '#FF0000'
+                    strokeWeight: 3,
+                    strokeColor: 'red'
                 },
                 title: 'Root Station'
             });
@@ -78,10 +130,10 @@
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 7,
-                    fillColor: '#00FF00',
+                    fillColor: '#615dff',
                     fillOpacity: 1,
                     strokeWeight: 2,
-                    strokeColor: '#00FF00'
+                    strokeColor: '#fff'
                 },
                 title: location.name  // Set the tooltip content to the station name
             });
@@ -89,9 +141,9 @@
             var line = new google.maps.Polyline({
                 path: [rootStation, location],
                 geodesic: true,
-                strokeColor: '#00FF00',
+                strokeColor: '#ff3333',
                 strokeOpacity: 1.0,
-                strokeWeight: 2
+                strokeWeight: 4
             });
             line.setMap(map);
 
@@ -191,51 +243,5 @@
             }
         }
     </script>
-</head>
-<body onload="initMap()">
-    <div id="map"></div>
 
-    <!-- Control panel to add new station -->
-    <div class="control-panel">
-        <h3>Add Station</h3>
-        <label for="station-type">Station Type:</label><br>
-        <select id="station-type">
-            <option value="substation">Substation</option>
-            <option value="subsubstation">Sub-substation</option>
-        </select><br>
-        <div id="substation-selection" style="display:none;">
-            <label for="substation-select">Parent Substation:</label><br>
-            <select id="substation-select"></select><br>
-        </div>
-        <label for="location-name">Location Name:</label><br>
-        <input type="text" id="location-name"><br>
-        <label for="latitude">Latitude:</label><br>
-        <input type="text" id="latitude"><br>
-        <label for="longitude">Longitude:</label><br>
-        <input type="text" id="longitude"><br>
-        <button onclick="handleAddStation()">Add Station</button>
-    </div>
-
-    <script>
-        document.getElementById('station-type').addEventListener('change', function() {
-            var substationSelection = document.getElementById('substation-selection');
-            if (this.value === 'subsubstation') {
-                substationSelection.style.display = 'block';
-            } else {
-                substationSelection.style.display = 'none';
-            }
-        });
-
-        function handleAddStation() {
-            var stationType = document.getElementById('station-type').value;
-            if (stationType === 'substation') {
-                addSubStation();
-            } else if (stationType === 'subsubstation') {
-                addSubSubStation();
-            }
-        }
-
-        window.initMap = initMap;  // Ensure initMap is in the global scope
-    </script>
-</body>
-</html>
+@endsection
