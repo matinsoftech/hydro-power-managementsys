@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('entry_sys', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->date('date');
+            $table->time('check_in_time');
+            $table->time('check_out_time')->nullable();
             $table->timestamps();
         });
     }
