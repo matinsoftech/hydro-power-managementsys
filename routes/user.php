@@ -13,3 +13,5 @@ Route::resource('holiday', HolidayController::class);
 
 Route::resource('meter-reading', MeterReadingController::class);
 Route::get('meter-reading-detail', [MeterReadingController::class, 'detail'])->name('meter-reading.detail');
+
+Route::resource('entry-sys', \App\Http\Controllers\User\EntrySysController::class)->only(['index', 'store']);

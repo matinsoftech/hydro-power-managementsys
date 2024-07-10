@@ -11,6 +11,11 @@ use App\Http\Requests\Grid\GridUpdateRequest;
 
 class GridController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('sys_entry')->only(['store','update','destroy']);
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {

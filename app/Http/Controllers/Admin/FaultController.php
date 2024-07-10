@@ -13,9 +13,6 @@ use App\Http\Requests\Fault\FaultUpdateRequest;
 
 class FaultController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         if($request->is('api/*')){
