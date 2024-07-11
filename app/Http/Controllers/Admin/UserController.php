@@ -38,7 +38,13 @@ class UserController extends Controller
     public function apiIndex(Request $request)
     {
         $query = User::query();
-        $data = $query->where('user_type','User')->get();
+        if($request->start_date && $request->end_date) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+        if($request->sort_by == "latest"){
+            $query->latest();
+        }
+        $data = $query->where('user_type','User')->paginate(20);
         return response()->json($data);
     }
 

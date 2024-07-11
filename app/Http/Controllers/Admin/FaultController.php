@@ -48,7 +48,13 @@ class FaultController extends Controller
     public function apiIndex(Request $request)
     {
         $query = Fault::query();
-        $data = $query->paginate(20);
+        if($request->start_date && $request->end_date) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+        if($request->sort_by == "latest"){
+            $query->latest();
+        }
+        $data = $query->with('solvedBy')->paginate(20);
         return response()->json(['data'=>$data]);
     }
 

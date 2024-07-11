@@ -17,4 +17,9 @@ class Fault extends Model
         'status',
         'solved_by',
     ];
+
+    public function solvedBy()
+    {
+        return $this->belongsTo(User::class,'solved_by');
+    }
 }

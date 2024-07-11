@@ -20,6 +20,9 @@ class FaultController extends Controller
 
     public function index(Request $request)
     {
+        if($request->is('api/*')) {
+            return $this->apiIndex($request);
+        }
         if ($request->ajax()) {
             $query = Fault::query();
             return DataTables::of($query)
@@ -45,6 +48,19 @@ class FaultController extends Controller
                 ->make(true);
         }
         return view('user.fault.index');
+    }
+
+    public function apiIndex(Request $request)
+    {
+        $query = Fault::query();
+        if($request->start_date && $request->end_date) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+        if($request->sort_by == "latest"){
+            $query->latest();
+        }
+        $data = $query->paginate(20);
+        return response()->json(['data'=>$data]);
     }
 
     /**

@@ -15,6 +15,7 @@ class HolidayController extends Controller
 
     public function index(Request $request)
     {
+        if($request->is('api/*')) return $this->apiIndex($request);
         if ($request->ajax()) {
             $start = $request->query('start');
             $end = $request->query('end');
@@ -38,5 +39,18 @@ class HolidayController extends Controller
             return response()->json($holidays);
         }
         return view('user.holiday.index');
+    }
+
+    public function apiIndex(Request $request)
+    {
+        $query = Holiday::query();
+        if($request->start_date && $request->end_date) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+        if($request->sort_by == "latest"){
+            $query->latest();
+        }
+        $data = $query->paginate(20);
+        return response()->json(['data'=>$data]);
     }
 }

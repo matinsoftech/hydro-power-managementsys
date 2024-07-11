@@ -19,6 +19,9 @@ class MeterReadingController extends Controller
 
     public function index(Request $request)
     {
+        if($request->is('api/*')) {
+            return $this->apiIndex($request);
+        }
         if ($request->ajax()) {
             $query = MeterReading::query();
             return DataTables::of($query->with('createdBy'))
@@ -46,6 +49,15 @@ class MeterReadingController extends Controller
                 ->make(true);
         }
         return view('user.meter-reading.index');
+    }
+
+    public function apiIndex(Request $request)
+    {
+        $query = MeterReading::query();
+        $meterReadings = $query->with('createdBy')->get();
+        return response()->json([
+            'data' => $meterReadings
+        ]);
     }
 
     /**
