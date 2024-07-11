@@ -27,10 +27,23 @@
         .control-panel select {
             margin-bottom: 5px;
         }
+        #change-root-button {
+            display: none;
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            z-index: 1;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #999;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
     </style>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCaCSJ0BZItSyXqBv8vpD1N4WBffJeKhLQ&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&callback=initMap" async defer></script>
     <script>
         var map;
+        var rootMarker;
         var rootStation = {lat: 40.730610, lng: -73.935242};
         var subStations = [
             {lat: 40.740610, lng: -73.925242, name: 'Substation 1'},
@@ -52,7 +65,7 @@
                 center: rootStation
             });
 
-            var rootMarker = new google.maps.Marker({
+            rootMarker = new google.maps.Marker({
                 position: rootStation,
                 map: map,
                 icon: {
@@ -66,9 +79,19 @@
                 title: 'Root Station'
             });
 
+            rootMarker.addListener('click', function() {
+                document.getElementById('change-root-button').style.display = 'block';
+            });
+
             for (var i = 0; i < subStations.length; i++) {
                 addSubStationMarker(subStations[i], i);
             }
+
+            map.addListener('click', function(event) {
+                if (document.getElementById('change-root-button').style.display === 'block') {
+                    setNewRootLocation(event.latLng);
+                }
+            });
         }
 
         function addSubStationMarker(location, index) {
@@ -104,6 +127,25 @@
 
             subStationMarkers.push(marker);
             updateSubStationOptions();
+        }
+
+        function setNewRootLocation(latLng) {
+            rootStation = {lat: latLng.lat(), lng: latLng.lng()};
+            rootMarker.setPosition(rootStation);
+            map.setCenter(rootStation);
+
+            for (var i = 0; i < subStationMarkers.length; i++) {
+                var line = new google.maps.Polyline({
+                    path: [rootStation, subStations[i]],
+                    geodesic: true,
+                    strokeColor: '#00FF00',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2
+                });
+                line.setMap(map);
+            }
+
+            document.getElementById('change-root-button').style.display = 'none';
         }
 
         function addSubStation() {
@@ -216,6 +258,11 @@
         <button onclick="handleAddStation()">Add Station</button>
     </div>
 
+    <!-- Button to change root location -->
+    <div id="change-root-button">
+        <button onclick="enableRootChange()">Change Root Location</button>
+    </div>
+
     <script>
         document.getElementById('station-type').addEventListener('change', function() {
             var substationSelection = document.getElementById('substation-selection');
@@ -235,7 +282,15 @@
             }
         }
 
+        function enableRootChange() {
+            document.getElementById('change-root-button').style.display = 'none';
+            google.maps.event.addListenerOnce(map, 'click', function(event) {
+                setNewRootLocation(event.latLng);
+            });
+        }
+
         window.initMap = initMap;  // Ensure initMap is in the global scope
     </script>
 </body>
 </html>
+
