@@ -14,6 +14,7 @@ class StationController extends Controller
     public function index()
     {
         //
+        return view('admin.station.index');
     }
 
     /**
