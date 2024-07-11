@@ -41,7 +41,7 @@ class GridController extends Controller
     public function apiIndex(Request $request)
     {
         $query = Grid::query();
-        $data = $query->paginate(20);
+        $data = $query->with('createdBy')->paginate(20);
         return response()->json(['data'=>$data]);
     }
 
