@@ -57,10 +57,9 @@
                             <div>
                                 <div class="d-inline-flex align-items-center">
                                     <h2 class="text-dark mb-1 font-weight-medium">236</h2>
-                                    <span
-                                        class="badge bg-primary font-12 text-white font-weight-medium rounded-pill ms-2 d-lg-block d-md-none">+18.33%</span>
+                                    {{-- <span class="badge bg-primary font-12 text-white font-weight-medium rounded-pill ms-2 d-lg-block d-md-none">+18.33%</span> --}}
                                 </div>
-                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">New Clients
+                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total Number User
                                 </h6>
                             </div>
                             <div class="ms-auto mt-md-3 mt-lg-0">
@@ -75,14 +74,15 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center">
                             <div>
-                                <h2 class="text-dark mb-1 w-100 text-truncate font-weight-medium"><sup
-                                        class="set-doller">$</sup>18,306</h2>
-                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Earnings of
-                                    Month
+                                <h2 class="text-dark mb-1 w-100 text-truncate font-weight-medium">
+                                    {{-- <sup class="set-doller">$</sup> --}}
+                                    18,306</h2>
+                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">
+                                    Total meter reading
                                 </h6>
                             </div>
                             <div class="ms-auto mt-md-3 mt-lg-0">
-                                <span class="opacity-7 text-muted"><i data-feather="dollar-sign"></i></span>
+                                {{-- <span class="opacity-7 text-muted"><i data-feather="dollar-sign"></i></span> --}}
                             </div>
                         </div>
                     </div>
@@ -95,20 +95,21 @@
                             <div>
                                 <div class="d-inline-flex align-items-center">
                                     <h2 class="text-dark mb-1 font-weight-medium">1538</h2>
-                                    <span
-                                        class="badge bg-danger font-12 text-white font-weight-medium rounded-pill ms-2 d-md-none d-lg-block">-18.33%</span>
+                                    {{-- <span
+                                        class="badge bg-danger font-12 text-white font-weight-medium rounded-pill ms-2 d-md-none d-lg-block">-18.33%</span> --}}
                                 </div>
-                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">New Projects
+                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">
+                                    Total Number of fault
                                 </h6>
                             </div>
                             <div class="ms-auto mt-md-3 mt-lg-0">
-                                <span class="opacity-7 text-muted"><i data-feather="file-plus"></i></span>
+                                {{-- <span class="opacity-7 text-muted"><i data-feather="file-plus"></i></span> --}}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-6 col-lg-3">
+            {{-- <div class="col-sm-6 col-lg-3">
                 <div class="card ">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
@@ -122,7 +123,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
         <!-- *************************************************************** -->
         <!-- End First Cards -->
@@ -130,7 +131,7 @@
         <!-- *************************************************************** -->
         <!-- Start Sales Charts Section -->
         <!-- *************************************************************** -->
-        <div class="row">
+        {{-- <div class="row">
             <div class="col-lg-4 col-md-12">
                 <div class="card">
                     <div class="card-body text-center">
@@ -217,14 +218,14 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         <!-- *************************************************************** -->
         <!-- End Sales Charts Section -->
         <!-- *************************************************************** -->
         <!-- *************************************************************** -->
         <!-- Start Location and Earnings Charts Section -->
         <!-- *************************************************************** -->
-        <div class="row">
+        {{-- <div class="row">
             <div class="col-md-6 col-lg-8">
                 <div class="card">
                     <div class="card-body">
@@ -305,14 +306,14 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         <!-- *************************************************************** -->
         <!-- End Location and Earnings Charts Section -->
         <!-- *************************************************************** -->
         <!-- *************************************************************** -->
         <!-- Start Top Leader Table -->
         <!-- *************************************************************** -->
-        <div class="row">
+        {{-- <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
@@ -488,7 +489,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         <!-- *************************************************************** -->
         <!-- End Top Leader Table -->
         <!-- *************************************************************** -->
