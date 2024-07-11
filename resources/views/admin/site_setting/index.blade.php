@@ -191,6 +191,13 @@
                             {{-- Sation Map Start --}}
 
                             <div>
+
+                                {{-- lat and lng --}}
+                                <input type="hidden" name="latitude" id="latitude"  >
+                                <input type="hidden" name="longitude" id="longitude" >
+                                {{-- lat and lng --}}
+
+
                                 <div class="d-flex align-items-center gap-3 mt-5 mb-3">
                                 <label for="map" class="d-block text-label ">Change Root Station</label>
                                 <a tabindex="0" class="map_help" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-title="Help" data-bs-content="Click on the root station on the map, then click 'Change Root Location' and select the root station!"><i class="fa-solid fa-question"></i></a>
@@ -248,23 +255,23 @@
 <script>
     var map;
     var rootMarker;
-    var rootStation = {lat: 40.730610, lng: -73.935242};
+    var rootStation = {lat: {{ $siteSetting->latitude }}, lng: {{ $siteSetting->longitude }}};
     console.log(rootStation);
 
-    // var subStations = [
-    //     {lat: 40.740610, lng: -73.925242, name: 'Substation 1'},
-    //     {lat: 40.720610, lng: -73.945242, name: 'Substation 2'},
-    //     {lat: 40.730610, lng: -73.955242, name: 'Substation 3'},
-    //     {lat: 40.750610, lng: -73.935242, name: 'Substation 4'}
-    // ];
-    // var subSubStations = [
-    //     [],
-    //     [],
-    //     [],
-    //     []
-    // ];
+    var subStations = [
+        {lat: 40.740610, lng: -73.925242, name: 'Substation 1'},
+        {lat: 40.720610, lng: -73.945242, name: 'Substation 2'},
+        {lat: 40.730610, lng: -73.955242, name: 'Substation 3'},
+        {lat: 40.750610, lng: -73.935242, name: 'Substation 4'}
+    ];
+    var subSubStations = [
+        [],
+        [],
+        [],
+        []
+    ];
 
-    // var subStationMarkers = [];
+    var subStationMarkers = [];
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
@@ -354,7 +361,8 @@
 
         document.getElementById('change-root-button').style.display = 'none';
         console.log(rootStation);
-
+        $('#latitude').val(rootStation.lat);
+        $('#longitude').val(rootStation.lng);
     }
 
     function addSubStation() {
