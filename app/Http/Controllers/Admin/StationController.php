@@ -23,6 +23,7 @@ class StationController extends Controller
     public function create()
     {
         //
+        return view('admin.station.create');
     }
 
     /**

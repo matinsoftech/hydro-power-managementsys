@@ -20,7 +20,6 @@ return new class extends Migration
             $table->decimal('longitude', 11, 8);
             $table->unsignedBigInteger('created_by');
             $table->timestamps();
-
             $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
         });
     }

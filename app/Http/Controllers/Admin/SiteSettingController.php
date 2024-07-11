@@ -26,6 +26,9 @@ class SiteSettingController extends Controller
             'address' => 'required',
             'description' => 'required',
             'keywords' => 'required',
+            'latitude' =>  'required',
+            'longitude' => 'required',
+
         ]);
         $imagePaths = $this->uploadImage($request, ['logo'], 'users');
         $siteSetting->update(array_merge($request->except('logo'), $imagePaths));
