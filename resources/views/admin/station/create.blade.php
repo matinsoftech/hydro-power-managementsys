@@ -101,7 +101,6 @@
 
 
 
-
 @endsection
 @section('scripts')
     <script src="{{ asset('assets/libs/moment/min/moment.min.js') }}" ></script>
