@@ -9,7 +9,7 @@
             <!-- ============================================================== -->
             <div class="navbar-brand">
                 <!-- Logo icon -->
-                <a href="index.html">
+                <a href="{{ route('dashboard') }}">
                     <img src="{{ asset(app('siteSetting')->logo) }}" alt="" class="img-fluid">
                 </a>
             </div>
