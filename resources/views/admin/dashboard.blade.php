@@ -199,7 +199,7 @@
                         <div class="" style="height:180px">
                             <div id="visitbylocate" style="height:100%"></div>
                         </div>
-                        <div class="row mb-3 align-items-center mt-1 mt-5">
+                        <div class="row mb-3 align-items-center mt-5">
                             <div class="col-4 text-end">
                                 <span class="text-muted font-14">India</span>
                             </div>
