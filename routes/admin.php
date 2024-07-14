@@ -20,7 +20,9 @@ Route::resource('user', UserController::class);
 Route::resource('grid', GridController::class);
 Route::resource('fault', FaultController::class);
 Route::resource('holiday', HolidayController::class);
+
 Route::resource('station', StationController::class);
+Route::post('sub-station',[StationController::class,'getSubStation'])->name('station.getSubStation');
 
 Route::resource('meter-reading', MeterReadingController::class);
 Route::get('meter-reading-detail', [MeterReadingController::class, 'detail'])->name('meter-reading.detail');

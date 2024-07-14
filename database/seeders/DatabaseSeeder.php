@@ -30,6 +30,8 @@ class DatabaseSeeder extends Seeder
             'address' => 'Biratnagar 05, Kanchanbari, Nepal',
             'description' => 'Website Description.',
             'keywords' => 'Website Keywords.',
+            'latitude' => '26.49234557502056',
+            'longitude' => '87.2814997202986',
         ]);
 
         \App\Models\MailConfig::create([
