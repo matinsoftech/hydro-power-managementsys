@@ -22,7 +22,16 @@ class StationStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'station_level' => 'required|integer',
+            'parent_id' => 'nullable|exists:stations,id',
+            'name' => 'required|string|max:255',
+            'map_name' => 'nullable|string|max:255',
+            'capacity' => 'required|integer',
+            'line_man_name' => 'required|string|max:255',
+            'manager' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
         ];
     }
 }

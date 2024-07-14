@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::create('stations', function (Blueprint $table) {
             $table->id();
             $table->integer('station_level');
-            $table->unsignedBigInteger('parent_id');
+            $table->unsignedBigInteger('parent_id')->nullable();
             $table->string('name');
             $table->string('map_name')->nullable();
             $table->integer('capacity');
             $table->string('line_man_name');
             $table->string('manager');
+            $table->date('start_date');
             $table->decimal('latitude', 11, 8);
             $table->decimal('longitude', 11, 8);
             $table->unsignedBigInteger('created_by');

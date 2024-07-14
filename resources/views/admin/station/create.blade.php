@@ -41,149 +41,288 @@
     </style>
 @endsection
 @section('content')
-    <div class="row justify-content-center p-4 align-items-center">
-        <div class="control-panel col-lg-6">
-            <h3>Add Station</h3>
-            <label for="station-type">Station Type:</label>
-            <select id="station-type">
-                <option value="substation">Substation</option>
-                <option value="subsubstation">Sub-substation</option>
-            </select>
-            <div id="substation-selection" style="display:none;">
-                <label for="substation-select">Parent Substation:</label>
-                <select id="substation-select"></select>
+    <form id="addData" action="{{ route('admin.station.store') }}" method="POST" enctype="multipart/form-data">
+        <div class="row justify-content-center p-4 align-items-center">
+            @csrf
+            <div class="control-panel col-lg-6">
+                <h3>Add Station</h3>
+                <label for="station_level" class="form-label">Station Level</label>
+                <select id="station_level" name="station_level" class="form-control form-select">
+                    <option value="">Select Station Level</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+
+                <div id="parent_station_div" class="d-none">
+                    <label for="station-type">Parent Station</label>
+                    <select id="parent_id" class="form-control form-select" name="parent_id">
+                        <option>Select Parent Station</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="location-name">Station Name: </label>
+                    <input type="text" id="location-name" name="name">
+                </div>
+                <di>
+                    <label for="location-name">Capacity</label>
+                    <input type="number" id="capacity" name="capacity">
+                </di>
+                <div>
+                    <label for="location-name">Starting Date</label>
+                    <input type="date" id="starting-date" name="start_date">
+                </div>
+                <div>
+                    <label for="latitude">Latitude:</label>
+                    <input type="text" id="latitude" name="latitude">
+                </div>
+                <div>
+                    <label for="longitude">Longitude:</label>
+                    <input type="text" id="longitude" name="longitude">
+                </div>
+                <div>
+                    <label for="lineman">Lineman Name</label>
+                    <input type="text" id="lineman" name="line_man_name">
+                </div>
+                <div>
+                    <label for="manager">Manager Name</label>
+                    <input type="text" id="manager" name="manager">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Station</button>
             </div>
-            <div>
-                <label for="location-name">Location Name: </label>
-                <input type="text" id="location-name">
+            <div class="col-lg-6">
+                <div class="main_div" style="width: 100% ;height: 500px" onload="initMap()">
+                    <div id="map"></div>
+                </div>
             </div>
-            <di>
-                <label for="location-name">Capacity</label>
-                <input type="number" id="capacity">
-            </di>
-            <div>
-                <label for="location-name">Starting Date</label>
-                <input type="date" id="starting-date">
-            </div>
-            <div>
-                <label for="latitude">Latitude:</label>
-                <input type="text" id="latitude">
-            </div>
-            <div>
-                <label for="longitude">Longitude:</label>
-                <input type="text" id="longitude">
-            </div>
-            <div>
-                <label for="lineman">Lineman Name</label>
-                <input type="text" id="lineman">
-            </div>
-            <div>
-                <label for="manager">Manager Name</label>
-                <input type="text" id="manager">
-            </div>
-            <button onclick="handleAddStation()" class="btn  btn-primary">Add Station</button>
         </div>
-        <div class="col-lg-6">
-            @include('admin.station.map')
-        </div>
-    </div>
+    </form>
 @endsection
 @section('scripts')
-    <script src="{{ asset('assets/libs/moment/min/moment.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/fullcalendar/dist/fullcalendar.min.js') }}"></script>
-
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&libraries=places" async
         defer></script>
     <script>
         $(document).ready(function() {
-            // Initialize the map
-            var rootLatLng = new google.maps.LatLng({{ app('siteSetting')->latitude }},
+            let map;
+            let markers = [];
+            let lines = [];
+            let lastParentLocation;
+            let rootLatLng = new google.maps.LatLng({{ app('siteSetting')->latitude }},
                 {{ app('siteSetting')->longitude }});
-            var mapOptions = {
+
+            let mapOptions = {
                 center: rootLatLng,
                 zoom: 12
             };
-            var map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+            map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
             // Initialize the root marker (non-draggable)
-            var rootMarker = new google.maps.Marker({
+            let rootMarker = new google.maps.Marker({
                 position: rootLatLng,
                 map: map,
                 draggable: false,
                 icon: {
                     url: "{{ asset('assets/map/root.png') }}",
-                    scaledSize: new google.maps.Size(60, 60) // Scale the icon to 30x30 pixels
+                    scaledSize: new google.maps.Size(60, 60)
                 },
                 title: "Root Station"
             });
 
             // Initialize the movable marker
-            var movableMarker = new google.maps.Marker({
+            let movableMarker = new google.maps.Marker({
                 position: rootLatLng,
                 map: map,
                 draggable: true,
                 title: "Movable Marker",
-                visible : false,
+                visible: false
             });
 
-            // Create the search box and link it to the UI element.
-            var input = document.getElementById('pac-input');
-            var searchBox = new google.maps.places.SearchBox(input);
+            let polyline = new google.maps.Polyline({
+                map: map,
+                strokeColor: "#0000FF",
+                strokeOpacity: 1.0,
+                strokeWeight: 2
+            });
+
+            let input = document.getElementById('pac-input');
+            let searchBox = new google.maps.places.SearchBox(input);
             map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
 
-            // Bias the SearchBox results towards current map's viewport.
             map.addListener('bounds_changed', function() {
                 searchBox.setBounds(map.getBounds());
             });
 
-            // Event listener for movable marker drag end
             google.maps.event.addListener(movableMarker, 'dragend', function(event) {
-                var lat = movableMarker.getPosition().lat();
-                var lng = movableMarker.getPosition().lng();
+                let lat = movableMarker.getPosition().lat();
+                let lng = movableMarker.getPosition().lng();
                 $('#latitude').val(lat);
                 $('#longitude').val(lng);
+                updatePolyline();
             });
 
-            // Event listener for map click to move the movable marker
             google.maps.event.addListener(map, 'click', function(event) {
-                var lat = event.latLng.lat();
-                var lng = event.latLng.lng();
+                let lat = event.latLng.lat();
+                let lng = event.latLng.lng();
                 movableMarker.setPosition(event.latLng);
                 movableMarker.setVisible(true); // Show the marker on map click
                 $('#latitude').val(lat);
                 $('#longitude').val(lng);
+                updatePolyline();
             });
 
-            // Listen for the event fired when the user selects a prediction and retrieve
-            // more details for that place.
             searchBox.addListener('places_changed', function() {
-                var places = searchBox.getPlaces();
+                let places = searchBox.getPlaces();
 
                 if (places.length == 0) {
                     return;
                 }
 
-                // Get the icon, name and location of the place.
-                var bounds = new google.maps.LatLngBounds();
+                let bounds = new google.maps.LatLngBounds();
                 places.forEach(function(place) {
                     if (!place.geometry) {
                         console.log("Returned place contains no geometry");
                         return;
                     }
 
-                    // Move the movable marker to the new place
                     movableMarker.setPosition(place.geometry.location);
                     $('#latitude').val(place.geometry.location.lat());
                     $('#longitude').val(place.geometry.location.lng());
+                    updatePolyline();
 
                     if (place.geometry.viewport) {
-                        // Only geocodes have viewport.
                         bounds.union(place.geometry.viewport);
                     } else {
                         bounds.extend(place.geometry.location);
                     }
                 });
                 map.fitBounds(bounds);
+            });
+
+            function updatePolyline() {
+                let path = [];
+                if (lastParentLocation) {
+                    path.push(lastParentLocation);
+                }
+                path.push(movableMarker.getPosition());
+                polyline.setPath(path);
+            }
+
+            $('#station_level').on('change', function() {
+                let level = $(this).val();
+
+                if (level == 1) {
+                    $('#parent_station_div').addClass('d-none');
+                    $('#parent_id').empty();
+                    lastParentLocation = null;
+                } else {
+                    $('#parent_station_div').removeClass('d-none');
+
+                    $.ajax({
+                        url: "{{ route('admin.station.getSubStation') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            level: level
+                        },
+                        success: function(response) {
+                            $('#parent_id').empty();
+                            $('#parent_id').append('<option>Select Parent Station</option>');
+                            $.each(response.data, function(key, value) {
+                                $('#parent_id').append('<option data-latitude="' + value
+                                    .latitude + '" data-longitude="' + value
+                                    .longitude + '" value="' + value.id + '">' +
+                                    value.name + '</option>');
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            console.log(xhr.responseText);
+                        }
+                    });
+                }
+            });
+
+            $('#parent_id').on('change', function() {
+                let selectedOption = $(this).find(':selected');
+                let latitude = parseFloat(selectedOption.data('latitude'));
+                let longitude = parseFloat(selectedOption.data('longitude'));
+
+                lastParentLocation = new google.maps.LatLng(latitude, longitude);
+                addMarker(lastParentLocation, true);
+                drawLine(rootLatLng, lastParentLocation);
+                updatePolyline();
+            });
+
+            function addMarker(location, isParentStation = false) {
+                let icon = null;
+
+                if (isParentStation) {
+                    icon = {
+                        url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png', // URL to the blue marker icon
+                        scaledSize: new google.maps.Size(60, 60) // Adjust size if necessary
+                    };
+                }
+
+                let marker = new google.maps.Marker({
+                    position: location,
+                    map: map,
+                    icon: icon
+                });
+
+                markers.push(marker);
+            }
+
+            function drawLine(start, end) {
+                let line = new google.maps.Polyline({
+                    path: [start, end],
+                    geodesic: true,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2
+                });
+                line.setMap(map);
+                lines.push(line);
+            }
+        });
+
+        $('#addData').on('submit', function(e) {
+            e.preventDefault();
+            let url = $(this).attr('action');
+            $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                url: url,
+                type: "POST",
+                data: new FormData(this),
+                contentType: false,
+                cache: false,
+                processData: false,
+                beforeSend: function() {
+                    console.log('ajax fired');
+                },
+                success: function(data) {
+                    if (data.status == true) {
+                        toastr['success'](data.message);
+                        window.location.href = data.url;
+                    } else {
+                        toastr['error'](data.message);
+                    }
+                },
+                error: function(xhr) {
+                    var i = 0;
+                    $('.help-block').remove();
+                    $('.has-error').removeClass('has-error');
+                    for (var error in xhr.responseJSON.errors) {
+                        $('#add_' + error).removeClass('has-error');
+                        $('#add_' + error).addClass('has-error');
+                        $('#error_' + error).html(
+                            '<span class="help-block ' + error + '">*' + xhr
+                            .responseJSON.errors[
+                                error] + '</span>');
+                        i++;
+                    }
+                }
             });
         });
     </script>
