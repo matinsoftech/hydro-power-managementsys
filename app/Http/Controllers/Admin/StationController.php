@@ -72,8 +72,17 @@ class StationController extends Controller
      */
     public function destroy(Station $station)
     {
-        $station->delete();
+        $this->deleteStationAndChilds($station);
         return response()->json(['status' => true,'message'=> 'Station deleted successfully.','url'=>route('admin.station.index')]);
+    }
+
+    private function deleteStationAndChilds($station)
+    {
+        foreach ($station->childs as $child) {
+            $this->deleteStationAndChilds($child); // Recursively delete child stations
+        }
+
+        $station->delete(); // Delete the current station
     }
 
     public function getSubStation(Request $request)

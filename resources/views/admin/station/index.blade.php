@@ -55,9 +55,38 @@
 
     <a href="/admin/station/create" class="add_station_btn btn btn-primary my-4">Add Station</a>
 
-
     <div class="main_div" style="width: 100% ;height: 500px">
         <div id="map"></div>
+    </div>
+
+    <div class="modal fade" id="stationModal" tabindex="-1" role="dialog" aria-labelledby="stationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stationModalLabel">Station Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Name:</strong> <span id="stationName"></span></p>
+                    <p><strong>Level:</strong> <span id="stationLevel"></span></p>
+                    <p><strong>Manager:</strong> <span id="stationManager"></span></p>
+                    <p><strong>Line Man:</strong> <span id="stationLineMan"></span></p>
+                    <p><strong>Capacity:</strong> <span id="stationCapacity"></span></p>
+                    <p><strong>Start Date:</strong> <span id="stationStartDate"></span></p>
+                    <p><strong>Latitude:</strong> <span id="stationLatitude"></span></p>
+                    <p><strong>Longitude:</strong> <span id="stationLongitude"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <form id="deleteStation" action="#" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger" data-dismiss="modal">Delete Station</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 @section('scripts')
@@ -85,7 +114,7 @@
                 title: "Root Station"
             });
 
-            function addMarker(location, isParentStation = false) {
+            function addMarker(location, station, isParentStation = false) {
                 let icon = null;
 
                 if (isParentStation) {
@@ -99,6 +128,19 @@
                     position: location,
                     map: map,
                     icon: icon
+                });
+
+                marker.addListener('click', function() {
+                    $('#stationName').text(station.name);
+                    $('#stationLevel').text(station.station_level);
+                    $('#stationManager').text(station.manager);
+                    $('#stationLineMan').text(station.line_man_name);
+                    $('#stationCapacity').text(station.capacity);
+                    $('#stationStartDate').text(station.start_date);
+                    $('#stationLatitude').text(station.latitude);
+                    $('#stationLongitude').text(station.longitude);
+                    $('#deleteStation').attr('action', '/admin/station/' + station.id);
+                    $('#stationModal').modal('show');
                 });
             }
 
@@ -116,7 +158,7 @@
             function plotStations(stations, parentLatLng) {
                 stations.forEach(station => {
                     let stationLatLng = new google.maps.LatLng(station.latitude, station.longitude);
-                    addMarker(stationLatLng, true);
+                    addMarker(stationLatLng, station, true);
                     drawLine(parentLatLng, stationLatLng);
 
                     if (station.childs && station.childs.length > 0) {
