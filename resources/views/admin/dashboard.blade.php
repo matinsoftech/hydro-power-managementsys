@@ -533,32 +533,39 @@
         <!-- *************************************************************** -->
         <!-- End Top Leader Table -->
         <!-- *************************************************************** -->
-        <div class="main_div" style="width: 100% ;height: 500px" onload="initMap()">
-            <h3>Our Stations:</h3>
+        <div class="main_div" style="width: 100% ;height: 500px">
             <div id="map"></div>
         </div>
     </div>
 
-
-    <!-- Control panel to add new station -->
-    <div class="control-panel d-none">
-                <h3>Add Station</h3>
-                <label for="station-type">Station Type:</label><br>
-                <select id="station-type">
-                    <option value="substation">Substation</option>
-                    <option value="subsubstation">Sub-substation</option>
-                </select><br>
-                <div id="substation-selection" style="display:none;">
-                    <label for="substation-select">Parent Substation:</label><br>
-                    <select id="substation-select"></select><br>
+    <div class="modal fade" id="stationModal" tabindex="-1" role="dialog" aria-labelledby="stationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stationModalLabel">Station Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <label for="location-name">Location Name:</label><br>
-                <input type="text" id="location-name"><br>
-                <label for="latitude">Latitude:</label><br>
-                <input type="text" id="latitude"><br>
-                <label for="longitude">Longitude:</label><br>
-                <input type="text" id="longitude"><br>
-                <button onclick="handleAddStation()">Add Station</button>
+                <div class="modal-body">
+                    <p><strong>Name:</strong> <span id="stationName"></span></p>
+                    <p><strong>Level:</strong> <span id="stationLevel"></span></p>
+                    <p><strong>Manager:</strong> <span id="stationManager"></span></p>
+                    <p><strong>Line Man:</strong> <span id="stationLineMan"></span></p>
+                    <p><strong>Capacity:</strong> <span id="stationCapacity"></span></p>
+                    <p><strong>Start Date:</strong> <span id="stationStartDate"></span></p>
+                    <p><strong>Latitude:</strong> <span id="stationLatitude"></span></p>
+                    <p><strong>Longitude:</strong> <span id="stationLongitude"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <form id="deleteStation" action="#" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger" data-dismiss="modal">Delete Station</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 @section('scripts')
@@ -569,168 +576,86 @@
 <script src="{{ asset('assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js') }}"></script>
 <script src="{{ asset('assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js') }}"></script>
 <script src="{{ asset('dist/js/pages/dashboards/dashboard1.min.js') }}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&libraries=places" async
+defer></script>
 <script>
-    var map;
-    var rootStation = {lat: 40.730610, lng: -73.935242};
-    var subStations = [
-        {lat: 40.740610, lng: -73.925242, name: 'Substation 1'},
-        {lat: 40.720610, lng: -73.945242, name: 'Substation 2'},
-        {lat: 40.730610, lng: -73.955242, name: 'Substation 3'},
-        {lat: 40.750610, lng: -73.935242, name: 'Substation 4'}
-    ];
-    var subSubStations = [
-        [],
-        [],
-        [],
-        []
-    ];
-    var subStationMarkers = [];
+document.addEventListener('DOMContentLoaded', function() {
+    let map;
+    let rootLatLng = new google.maps.LatLng({{ app('siteSetting')->latitude }}, {{ app('siteSetting')->longitude }});
 
-    function initMap() {
-        map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 10,
-            center: rootStation
-        });
+    let mapOptions = {
+        center: rootLatLng,
+        zoom: 12
+    };
 
-        var rootMarker = new google.maps.Marker({
-            position: rootStation,
-            map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: '#ffffff',
-                fillOpacity: 1,
-                strokeWeight: 3,
-                strokeColor: 'red'
-            },
-            title: 'Root Station'
-        });
+    map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
-        for (var i = 0; i < subStations.length; i++) {
-            addSubStationMarker(subStations[i], i);
+    let rootMarker = new google.maps.Marker({
+        position: rootLatLng,
+        map: map,
+        icon: {
+            url: "{{ asset('assets/map/root.png') }}",
+            scaledSize: new google.maps.Size(60, 60)
+        },
+        title: "Root Station"
+    });
+
+    function addMarker(location, station, isParentStation = false) {
+        let icon = null;
+
+        if (isParentStation) {
+            icon = {
+                url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                scaledSize: new google.maps.Size(60, 60)
+            };
         }
-    }
 
-    function addSubStationMarker(location, index) {
-        var marker = new google.maps.Marker({
+        let marker = new google.maps.Marker({
             position: location,
             map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 7,
-                fillColor: '#615dff',
-                fillOpacity: 1,
-                strokeWeight: 2,
-                strokeColor: '#fff'
-            },
-            title: location.name  // Set the tooltip content to the station name
+            icon: icon
         });
 
-        var line = new google.maps.Polyline({
-            path: [rootStation, location],
-            geodesic: true,
-            strokeColor: '#ff3333',
-            strokeOpacity: 1.0,
-            strokeWeight: 4
-        });
-        line.setMap(map);
-
-        // Add click event listener to show tooltip
         marker.addListener('click', function() {
-            new google.maps.InfoWindow({
-                content: '<b>' + location.name + '</b>'
-            }).open(map, marker);
+            $('#stationName').text(station.name);
+            $('#stationLevel').text(station.station_level);
+            $('#stationManager').text(station.manager);
+            $('#stationLineMan').text(station.line_man_name);
+            $('#stationCapacity').text(station.capacity);
+            $('#stationStartDate').text(station.start_date);
+            $('#stationLatitude').text(station.latitude);
+            $('#stationLongitude').text(station.longitude);
+            $('#deleteStation').attr('action', '/admin/station/' + station.id);
+            $('#stationModal').modal('show');
         });
-
-        subStationMarkers.push(marker);
-        updateSubStationOptions();
     }
 
-    function addSubStation() {
-        var locationName = document.getElementById('location-name').value;
-        var latitude = parseFloat(document.getElementById('latitude').value);
-        var longitude = parseFloat(document.getElementById('longitude').value);
-
-        if (isNaN(latitude) || isNaN(longitude)) {
-            alert('Please enter valid coordinates.');
-            return;
-        }
-
-        var newSubStation = {lat: latitude, lng: longitude, name: locationName};
-        subStations.push(newSubStation);
-        subSubStations.push([]); // Ensure subSubStations array is updated
-        addSubStationMarker(newSubStation, subStations.length - 1);
-
-        // Clear input fields after adding the marker
-        document.getElementById('location-name').value = '';
-        document.getElementById('latitude').value = '';
-        document.getElementById('longitude').value = '';
-    }
-
-    function addSubSubStation() {
-        var subStationIndex = document.getElementById('substation-select').value;
-        var locationName = document.getElementById('location-name').value;
-        var latitude = parseFloat(document.getElementById('latitude').value);
-        var longitude = parseFloat(document.getElementById('longitude').value);
-
-        if (isNaN(latitude) || isNaN(longitude)) {
-            alert('Please enter valid coordinates.');
-            return;
-        }
-
-        var newSubSubStation = {lat: latitude, lng: longitude, name: locationName};
-        subSubStations[subStationIndex].push(newSubSubStation);
-        addSubSubStationMarker(newSubSubStation, subStationIndex);
-
-        // Clear input fields after adding the marker
-        document.getElementById('location-name').value = '';
-        document.getElementById('latitude').value = '';
-        document.getElementById('longitude').value = '';
-    }
-
-    function addSubSubStationMarker(location, subStationIndex) {
-        var marker = new google.maps.Marker({
-            position: location,
-            map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 5,
-                fillColor: '#0000FF',
-                fillOpacity: 1,
-                strokeWeight: 2,
-                strokeColor: '#0000FF'
-            },
-            title: location.name  // Set the tooltip content to the station name
-        });
-
-        var line = new google.maps.Polyline({
-            path: [subStations[subStationIndex], location],
+    function drawLine(start, end) {
+        let line = new google.maps.Polyline({
+            path: [start, end],
             geodesic: true,
-            strokeColor: '#0000FF',
+            strokeColor: '#FF0000',
             strokeOpacity: 1.0,
             strokeWeight: 2
         });
         line.setMap(map);
+    }
 
-        // Add click event listener to show tooltip
-        marker.addListener('click', function() {
-            new google.maps.InfoWindow({
-                content: '<b>' + location.name + '</b>'
-            }).open(map, marker);
+    function plotStations(stations, parentLatLng) {
+        stations.forEach(station => {
+            let stationLatLng = new google.maps.LatLng(station.latitude, station.longitude);
+            addMarker(stationLatLng, station, true);
+            drawLine(parentLatLng, stationLatLng);
+
+            if (station.childs && station.childs.length > 0) {
+                plotStations(station.childs, stationLatLng);
+            }
         });
     }
 
-    function updateSubStationOptions() {
-        var select = document.getElementById('substation-select');
-        select.innerHTML = '';
-        for (var i = 0; i < subStations.length; i++) {
-            var option = document.createElement('option');
-            option.value = i;
-            option.text = subStations[i].name;
-            select.add(option);
-        }
-    }
+    // Initial plot with root station as the parent
+    plotStations(@json($stations), rootLatLng);
+});
 </script>
 
 <script>
