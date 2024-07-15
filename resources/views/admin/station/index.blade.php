@@ -59,7 +59,8 @@
         <div id="map"></div>
     </div>
 
-    <div class="modal fade" id="stationModal" tabindex="-1" role="dialog" aria-labelledby="stationModalLabel" aria-hidden="true">
+    <div class="modal fade" id="stationModal" tabindex="-1" role="dialog" aria-labelledby="stationModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -93,9 +94,10 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&libraries=places" async
         defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        $(function() {
             let map;
-            let rootLatLng = new google.maps.LatLng({{ app('siteSetting')->latitude }}, {{ app('siteSetting')->longitude }});
+            let rootLatLng = new google.maps.LatLng({{ app('siteSetting')->latitude }},
+                {{ app('siteSetting')->longitude }});
 
             let mapOptions = {
                 center: rootLatLng,
@@ -156,7 +158,7 @@
             }
 
             function plotStations(stations, parentLatLng) {
-                stations.forEach(station => {
+                $.each(stations, function(index, station) {
                     let stationLatLng = new google.maps.LatLng(station.latitude, station.longitude);
                     addMarker(stationLatLng, station, true);
                     drawLine(parentLatLng, stationLatLng);
