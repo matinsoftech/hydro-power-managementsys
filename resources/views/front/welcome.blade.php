@@ -15,7 +15,6 @@
                 margin: 0;
             }
 
-
         .main_sec{
             font-family: "Rubik", sans-serif;
           background-position: center;
