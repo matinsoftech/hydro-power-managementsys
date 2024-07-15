@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Map</title>
     <style>
         .main_div {
             position: relative;
@@ -58,9 +58,11 @@
         <div id="map"></div>
     </div>
 
+
+    <script src="https://hydropower.merogaditracker.com/assets/libs/jquery/dist/jquery.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&libraries=places" async
-defer></script>
-<script>
+    defer></script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
         let map;
         let rootLatLng = new google.maps.LatLng({{ app('siteSetting')->latitude }}, {{ app('siteSetting')->longitude }});
@@ -138,7 +140,7 @@ defer></script>
         // Initial plot with root station as the parent
         plotStations(@json($stations), rootLatLng);
     });
-</script>
+    </script>
 </body>
 </html>
 
