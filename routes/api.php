@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function(){
     });
 
     Route::get('analytics-data', [\App\Http\Controllers\User\AnalyticsController::class, 'index']);
+    Route::get('users',[\App\Http\Controllers\Admin\UserController::class,'apiIndex']);
 
     Route::middleware('user')->prefix('user')->group(function () {
         Route::post('entry-sys', [\App\Http\Controllers\User\EntrySysController::class, 'store']);
