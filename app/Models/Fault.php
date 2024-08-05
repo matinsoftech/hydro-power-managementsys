@@ -22,4 +22,8 @@ class Fault extends Model
     {
         return $this->belongsTo(User::class,'solved_by');
     }
+    public function foundBy()
+    {
+        return $this->belongsTo(User::class,'found_by');
+    }
 }

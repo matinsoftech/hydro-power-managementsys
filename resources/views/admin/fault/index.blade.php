@@ -27,6 +27,7 @@
                                         <th>Video</th>
                                         <th>Status</th>
                                         <th>Solved By</th>
+                                        <th>Found By</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -113,6 +114,10 @@
                 {
                     name: "solved_by",
                     data: "solved_by"
+                },
+                {
+                    name: "found_by",
+                    data: "found_by"
                 },
                 {
                     name: "action",

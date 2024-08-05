@@ -19,6 +19,11 @@ Route::resource('mail-setting', MailSettingController::class)->only(['index', 'u
 Route::resource('user', UserController::class);
 Route::resource('grid', GridController::class);
 Route::resource('fault', FaultController::class);
+// Route::post('/fault-store', [FaultController::class, 'store'])->name('admin.fault.created');
+
+// Route::get('/fault-edit/{id}', [FaultController::class, 'edit'])->name('admin.fault.edit');
+
+
 Route::resource('holiday', HolidayController::class);
 
 Route::resource('station', StationController::class);

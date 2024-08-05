@@ -15,6 +15,7 @@ class FaultController extends Controller
 {
     public function index(Request $request)
     {
+
         if($request->is('api/*')){
             return $this->apiIndex($request);
         }
@@ -24,14 +25,17 @@ class FaultController extends Controller
                 ->addIndexColumn()
                 ->editColumn('photo', function ($row) {
                     if(!$row->photo) return 'No image';
-                    return '<img src="'.asset($row->photo).'" width="50" height="50"/>';
+                    return '<img src="'.asset('FaultPhoto/'.$row->photo).'" width="50" height="50"/>';
                 })
                 ->editColumn('video', function ($row) {
                     if(!$row->video) return 'No video';
-                    return '<video width="50" height="50" controls><source src="'.asset($row->video).'" type="video/mp4"></video>';
+                    return '<video width="50" height="50" controls><source src="'.asset('FaultVideo/'.$row->video).'" type="video/mp4"></video>';
                 })
                 ->editColumn('solved_by',function ($row){
                     return $row->solvedBy->name ?? 'No user';
+                })
+                ->editColumn('found_by',function ($row){
+                    return $row->foundBy->name ?? 'No user';
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
@@ -54,8 +58,17 @@ class FaultController extends Controller
         if($request->sort_by == "latest"){
             $query->latest();
         }
-        $data = $query->with('solvedBy')->paginate(20);
-        return response()->json(['data'=>$data]);
+        // $data = $query->with('solvedBy')->paginate(20);
+        // return response()->json(['data'=>$data]);
+
+          // Load relationships as needed
+    $query->with(['solvedBy', 'foundBy']); // Ensure 'foundBy' is a valid relationship
+
+    // Paginate results
+    $data = $query->paginate(20);
+
+    // Return JSON response with paginated data
+    return response()->json(['data' => $data]);
     }
 
     /**
@@ -70,26 +83,54 @@ class FaultController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(FaultStoreRequest $request)
+    public function store(Request $request)
     {
-        $data = $request->validated();
-        if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
+        try {
+            // $request->validate([
+            //     'photo' => 'nullable|image|max:2048', // Max size 2MB for images
+            //     'video' => 'nullable|file|max:204800', // Max size 200MB for videos
+            // ]);
 
-            $file->storeAs('users/photos', $fileName, 'public');
-            $data['photo'] = 'storage/users/photos/' . $fileName;
-        }
-        if ($request->hasFile('video')) {
-            $file = $request->file('video');
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
+            $datas = new Fault;
+            $datas->fault_time = $request->fault_time;
+            $datas->reason = $request->reason;
 
-            $file->storeAs('users/videos', $fileName, 'public');
-            $data['video'] = 'storage/users/videos/' . $fileName;
+            // Photo upload
+            if ($request->hasFile('photo')) {
+                $photo = $request->file('photo');
+                if ($photo->isValid()) {
+                    $imagename = time() . '.' . $photo->extension();
+                    $photo->move(public_path('FaultPhoto'), $imagename);
+                    $datas->photo = $imagename;
+                } else {
+                    throw new \Exception('Photo upload failed.');
+                }
+            }
+
+            // Video upload
+            if ($request->hasFile('video')) {
+                $video = $request->file('video');
+                if ($video->isValid()) {
+                    $videoname = time() . '.' . $video->extension();
+                    $video->move(public_path('FaultVideo'), $videoname);
+                    $datas->video = $videoname;
+                } else {
+                    throw new \Exception('Video upload failed.');
+                }
+            }
+
+            $datas->status = $request->status;
+            $datas->solved_by = $request->solved_by;
+            $datas->found_by = $request->found_by;
+            $datas->save();
+
+            return redirect()->back()->with('success', 'Fault created successfully!');
+        } catch (\Exception $e) {
+            \Log::error('Error creating fault: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while creating the fault.');
         }
-        Fault::create($data);
-        return response(['status' => true, 'message' => 'Fault added successfully','url'=>route('admin.fault.index')]);
     }
+
 
     /**
      * Display the specified resource.
@@ -104,6 +145,7 @@ class FaultController extends Controller
      */
     public function edit(Fault $fault)
     {
+
         $users = User::all();
         return view('admin.fault.edit',compact('fault','users'));
     }
@@ -111,32 +153,54 @@ class FaultController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(FaultUpdateRequest $request, Fault $fault)
-    {
-        $data = $request->validated();
+    public function update(Request $request, Fault $fault)
+{
+    try {
+        // Update fault attributes
+        $fault->fault_time = $request->fault_time;
+        $fault->reason = $request->reason;
+
+        // Handle photo upload
         if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
-
-            $file->storeAs('users/photos', $fileName, 'public');
-            $data['photo'] = 'storage/users/photos/' . $fileName;
+            $photo = $request->file('photo');
+            if ($photo->isValid()) {
+                $imagename = time() . '.' . $photo->extension();
+                $photo->move(public_path('FaultPhoto'), $imagename);
+                $fault->photo = $imagename;
+            }
         }
+
+        // Handle video upload
         if ($request->hasFile('video')) {
-            $file = $request->file('video');
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
-
-            $file->storeAs('users/videos', $fileName, 'public');
-            $data['video'] = 'storage/users/videos/' . $fileName;
+            $video = $request->file('video');
+            if ($video->isValid()) {
+                $videoname = time() . '.' . $video->extension();
+                $video->move(public_path('FaultVideo'), $videoname);
+                $fault->video = $videoname;
+            }
         }
-        $fault->update($data);
-        return response(['status' => true, 'message' => 'Fault updated successfully','url'=>route('admin.fault.index')]);
+
+        // Update other attributes
+        $fault->status = $request->status;
+        $fault->solved_by = $request->solved_by;
+        $fault->save();
+
+        return redirect()->back()->with('success', 'Fault updated successfully!');
+    } catch (\Exception $e) {
+        \Log::error('Error updating fault: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'An error occurred while updating the fault.');
     }
+}
+
+
+
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(Fault $fault)
     {
+        // return "hello";
         $fault->delete();
         return response(['status' => true, 'message' => 'Fault deleted successfully','url'=>route('admin.fault.index')]);
     }

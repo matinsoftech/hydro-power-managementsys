@@ -23,7 +23,7 @@
                                         <th>Date</th>
                                         <th>Time</th>
                                         <th>Main Meter</th>
-                                        <th>Show Meter</th>
+                                        <th>Check Meter</th>
                                         <th>Remarks</th>
                                         <th>Entry By</th>
                                         <th>Action</th>

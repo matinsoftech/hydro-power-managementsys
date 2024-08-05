@@ -60,7 +60,7 @@
                                         <label class="form-label text-dark" for="email">Email</label>
                                         <input class="form-control" id="email" type="email"
                                             placeholder="Enter your email" name="email">
-                                        <span id="error_email"></span>
+                                        <span id="error_email" style="color:red;"></span>
                                     </div>
                                 </div>
                                 <div class="col-lg-12">
@@ -68,7 +68,7 @@
                                         <label class="form-label text-dark" for="password">Password</label>
                                         <input class="form-control" id="password" type="password"
                                             placeholder="Enter your password" name="password">
-                                        <span id="error_password"></span>
+                                        <span id="error_password"  style="color:red;"></span>
                                     </div>
                                 </div>
                                 <div class="col-lg-12 text-center">
