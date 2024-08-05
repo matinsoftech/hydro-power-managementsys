@@ -54,7 +54,7 @@
 @endsection
 
 @section('content')
-    <div class="page-breadcrumb">
+    {{-- <div class="page-breadcrumb">
         <div class="row">
             <div class="col-7 align-self-center">
                 <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Good Morning Jason!</h3>
@@ -78,7 +78,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
     <!-- ============================================================== -->
     <!-- End Bread crumb and right sidebar toggle -->
     <!-- ============================================================== -->
@@ -96,7 +96,7 @@
                         <div class="d-flex align-items-center">
                             <div>
                                 <div class="d-inline-flex align-items-center">
-                                    <h2 class="text-dark mb-1 font-weight-medium">236</h2>
+                                    <h2 class="text-dark mb-1 font-weight-medium">{{ $TotalUsers }}</h2>
                                     {{-- <span class="badge bg-primary font-12 text-white font-weight-medium rounded-pill ms-2 d-lg-block d-md-none">+18.33%</span> --}}
                                 </div>
                                 <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total Number User
@@ -116,7 +116,7 @@
                             <div>
                                 <h2 class="text-dark mb-1 w-100 text-truncate font-weight-medium">
                                     {{-- <sup class="set-doller">$</sup> --}}
-                                    18,306</h2>
+                                   {{ $TotalMeterReading }}</h2>
                                 <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">
                                     Total meter reading
                                 </h6>
@@ -134,7 +134,7 @@
                         <div class="d-flex align-items-center">
                             <div>
                                 <div class="d-inline-flex align-items-center">
-                                    <h2 class="text-dark mb-1 font-weight-medium">1538</h2>
+                                    <h2 class="text-dark mb-1 font-weight-medium">{{$TotalFault  }}</h2>
                                     {{-- <span
                                         class="badge bg-danger font-12 text-white font-weight-medium rounded-pill ms-2 d-md-none d-lg-block">-18.33%</span> --}}
                                 </div>

@@ -26,7 +26,8 @@
                                                     <tr>
                                                         <th>Time</th>
                                                         <th>Main Meter</th>
-                                                        <th>Show Meter</th>
+                                                        <th>Check Meter</th>
+                                                        <th>accuracy </th>
                                                         <th>Difference</th>
                                                         <th>Remarks</th>
                                                     </tr>
@@ -56,6 +57,11 @@
                                                                 <input type="number" name="show_meter[{{ $i }}]"
                                                                     class="form-control show-meter" id="show_meter_{{ $i }}"
                                                                     value="{{ $reading->show_meter ?? '' }}">
+                                                            </td>
+                                                            <td>
+                                                                <input type="number" name="accuracy [{{ $i }}]"
+                                                                    class="form-control show-meter" id="accuracy {{ $i }}"
+                                                                    value="{{ $reading->accuracy  ?? '' }}">
                                                             </td>
                                                             <td>
                                                                 <input type="text" name="difference[{{ $i }}]" class="form-control" id="difference_{{ $i }}" value="{{ isset($reading->main_meter) && isset($reading->show_meter) ? $reading->main_meter - $reading->show_meter : '' }}" readonly>

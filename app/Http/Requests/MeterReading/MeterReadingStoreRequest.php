@@ -28,6 +28,8 @@ class MeterReadingStoreRequest extends FormRequest
             'main_meter.*' => 'nullable|numeric',
             'show_meter' => 'nullable|array',
             'show_meter.*' => 'nullable|numeric',
+            'accuracy' => 'nullable|array',
+            'accuracy.*' => 'nullable|numeric',
             'remarks' => 'nullable|array',
             'remarks.*' => 'nullable|string',
         ];

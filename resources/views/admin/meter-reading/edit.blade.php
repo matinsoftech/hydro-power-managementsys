@@ -26,7 +26,7 @@
                                                     <tr>
                                                         <th>Time</th>
                                                         <th>Main Meter</th>
-                                                        <th>Show Meter</th>
+                                                        <th>Check Meter</th>
                                                         <th>Remarks</th>
                                                     </tr>
                                                 </thead>
