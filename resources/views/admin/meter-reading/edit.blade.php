@@ -27,6 +27,7 @@
                                                         <th>Time</th>
                                                         <th>Main Meter</th>
                                                         <th>Check Meter</th>
+                                                        <th>Accuracy</th> <!-- New Header for Accuracy -->
                                                         <th>Remarks</th>
                                                     </tr>
                                                 </thead>
@@ -45,21 +46,17 @@
                                                                 @endif
                                                             </td>
                                                             <td>
-                                                                <input type="hidden" name="time[{{ $i }}]"
-                                                                    value="{{ $time }}">
-                                                                <input type="number" name="main_meter[{{ $i }}]"
-                                                                    class="form-control"
-                                                                    value="{{ $reading->main_meter ?? '' }}">
+                                                                <input type="hidden" name="time[{{ $i }}]" value="{{ $time }}">
+                                                                <input type="number" name="main_meter[{{ $i }}]" class="form-control" value="{{ $reading->main_meter ?? '' }}">
                                                             </td>
                                                             <td>
-                                                                <input type="number" name="show_meter[{{ $i }}]"
-                                                                    class="form-control"
-                                                                    value="{{ $reading->show_meter ?? '' }}">
+                                                                <input type="number" name="show_meter[{{ $i }}]" class="form-control" value="{{ $reading->show_meter ?? '' }}">
                                                             </td>
                                                             <td>
-                                                                <input type="text" name="remarks[{{ $i }}]"
-                                                                    class="form-control"
-                                                                    value="{{ $reading->remarks ?? '' }}">
+                                                                <input type="number" step="0.01" name="accuracy[{{ $i }}]" class="form-control" value="{{ $reading->accuracy ?? '' }}"> <!-- New Accuracy Field -->
+                                                            </td>
+                                                            <td>
+                                                                <input type="text" name="remarks[{{ $i }}]" class="form-control" value="{{ $reading->remarks ?? '' }}">
                                                             </td>
                                                         </tr>
                                                     @endfor
@@ -81,6 +78,7 @@
         </div>
     </div>
 @endsection
+
 @section('scripts')
     <script>
         $('#addData').on('submit', function(e) {

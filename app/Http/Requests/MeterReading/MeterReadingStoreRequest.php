@@ -29,7 +29,7 @@ class MeterReadingStoreRequest extends FormRequest
             'show_meter' => 'nullable|array',
             'show_meter.*' => 'nullable|numeric',
             'accuracy' => 'nullable|array',
-            'accuracy.*' => 'nullable|numeric',
+            'accuracy.*' => 'nullable|numeric', // Allows decimal values
             'remarks' => 'nullable|array',
             'remarks.*' => 'nullable|string',
         ];

@@ -15,14 +15,14 @@
                         <h4 class="card-title">Meter Reading Detail By Date </h4>
 
                         <form action="{{ route('admin.meter-reading.detail') }}" method="GET">
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <input type="date" name="date" id="date" class="form-control" value="{{ isset($date) ? $date : '' }}">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <input type="date" name="date" id="date" class="form-control" value="{{ isset($date) ? $date : '' }}">
+                                </div>
+                                <div class="col-sm-6">
+                                    <button type="submit" class="btn btn-primary">Search</button>
+                                </div>
                             </div>
-                            <div class="col-sm-6">
-                                <button type="submit" class="btn btn-primary">Search</button>
-                            </div>
-                        </div>
                         </form>
 
                     </div>
@@ -36,6 +36,7 @@
                                         <th>Time</th>
                                         <th>Main Meter</th>
                                         <th>Show Meter</th>
+                                        <th>Accuracy</th> <!-- Added column -->
                                         <th>Remarks</th>
                                     </tr>
                                 </thead>
@@ -60,6 +61,9 @@
                                                 {{ $reading->show_meter ?? '' }}
                                             </td>
                                             <td>
+                                                {{ $reading->accuracy ?? '' }} <!-- Added column -->
+                                            </td>
+                                            <td>
                                                 {{ $reading->remarks ?? '' }}
                                             </td>
                                         </tr>
@@ -76,6 +80,7 @@
         </div>
     </div>
 @endsection
+
 @section('scripts')
     <script>
         var myTable = $("#myTable").DataTable({
@@ -97,7 +102,8 @@
             ajax: {
                 url: "{{ route('admin.meter-reading.index') }}",
             },
-            columns: [{
+            columns: [
+                {
                     name: "DT_RowIndex",
                     data: "DT_RowIndex",
                     orderable: false,
@@ -118,6 +124,10 @@
                 {
                     name: "show_meter",
                     data: "show_meter"
+                },
+                {
+                    name: "accuracy", // Added column
+                    data: "accuracy"
                 },
                 {
                     name: "remarks",

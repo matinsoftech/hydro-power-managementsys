@@ -98,15 +98,12 @@ class MeterReadingController extends Controller
     public function store(MeterReadingStoreRequest $request)
     {
         $validatedData = $request->validated();
-        if($request->date){
-            $date = $request->date;
-        }else{
-            $date = now()->format('Y-m-d');
-        }
+
+        $date = $request->date ? $request->date : now()->format('Y-m-d');
         $userId = auth()->id();
 
         foreach ($validatedData['time'] as $index => $time) {
-            if (!empty($validatedData['main_meter'][$index]) || !empty($validatedData['show_meter'][$index]) || !empty($validatedData['remarks'][$index])) {
+            if (!empty($validatedData['main_meter'][$index]) || !empty($validatedData['show_meter'][$index]) || !empty($validatedData['remarks'][$index]) || !empty($validatedData['accuracy'][$index])) {
                 MeterReading::updateOrCreate(
                     [
                         'created_by' => $userId,
@@ -116,6 +113,7 @@ class MeterReadingController extends Controller
                     [
                         'main_meter' => $validatedData['main_meter'][$index] ?? null,
                         'show_meter' => $validatedData['show_meter'][$index] ?? null,
+                        'accuracy' => $validatedData['accuracy'][$index] ?? null, // Handles decimal value
                         'remarks' => $validatedData['remarks'][$index] ?? null,
                     ]
                 );
@@ -124,6 +122,7 @@ class MeterReadingController extends Controller
 
         return response()->json(['status' => true, 'message' => 'Meter readings added successfully', 'url' => route('admin.meter-reading.index')]);
     }
+
 
     /**
      * Display the specified resource.

@@ -149,6 +149,14 @@
                     </div>
                 </div>
             </div>
+            <div class="col-lg-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <button id="checkInOut" class="btn btn-success btn-lg-circle">
+                            Check In
+                        </button>
+                    </div>
+                </div>
             {{-- <div class="col-sm-6 col-lg-3">
                 <div class="card ">
                     <div class="card-body">
@@ -171,7 +179,7 @@
         <!-- *************************************************************** -->
         <!-- Start Sales Charts Section -->
         <!-- *************************************************************** -->
-        <div class="row">
+        {{-- <div class="row">
             <div class="col-lg-4 col-md-12">
                 <div class="card">
                     <div class="card-body text-center">
@@ -180,7 +188,7 @@
                         </button>
                     </div>
                 </div>
-            </div>
+            </div> --}}
             {{-- <div class="col-lg-4 col-md-12">
                 <div class="card">
                     <div class="card-body">
@@ -531,11 +539,60 @@
             </div>
         </div> --}}
         <!-- *************************************************************** -->
-        <!-- End Top Leader Table -->
+        <div class="container-fluid">
+            <!-- ============================================================== -->
+            <!-- Start Page Content -->
+            <!-- ============================================================== -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            {{-- <h4 class="card-title">Today Meter Reading List
+                                <a href="{{ route('admin.meter-reading.create') }}" class="btn btn-sm btn-primary float-right">Add Meter Reading</a>
+                            </h4> --}}
+                            <div class="table-responsive">
+                               <!-- Display Today's Meter Readings -->
+<h3>Today's Meter Readings</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Main Meter</th>
+            <th>Show Meter</th>
+            <th>Accuracy</th>
+            <th>Remarks</th>
+            <th>Created By</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach($todaysMeterReadings as $reading)
+            <tr>
+                <td>{{ $reading->date }}</td>
+                <td>{{ $reading->time }}</td>
+                <td>{{ $reading->main_meter }}</td>
+                <td>{{ $reading->show_meter }}</td>
+                <td>{{ $reading->accuracy }}</td>
+                <td>{{ $reading->remarks }}</td>
+                <td>{{ $reading->createdBy->name }}</td>
+            </tr>
+        @endforeach
+    </tbody>
+</table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
         <!-- *************************************************************** -->
         <div class="main_div" style="width: 100% ;height: 500px">
             <div id="map"></div>
         </div>
+
     </div>
 
     <div class="modal fade" id="stationModal" tabindex="-1" role="dialog" aria-labelledby="stationModalLabel" aria-hidden="true">
@@ -685,4 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 </script>
+
+
+
 @endsection

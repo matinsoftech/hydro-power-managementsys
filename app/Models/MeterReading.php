@@ -14,6 +14,7 @@ class MeterReading extends Model
         'time',
         'main_meter',
         'show_meter',
+        'accuracy',
         'remarks',
         'created_by',
     ];
