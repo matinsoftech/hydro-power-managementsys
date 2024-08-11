@@ -1,18 +1,24 @@
 @extends('layouts.app')
 
 @section('title', 'Meter Reading Entry')
-
 @section('content')
 
-    <div class="container-fluid">
+    <style>
+        .table>:not(:last-child)>:last-child>*{
+            min-width: 150px;
+        }
+    </style>
+
+    <div class="container-fluid p-4">
+
         <!-- ============================================================== -->
         <!-- Start Page Content -->
         <!-- ============================================================== -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Meter Reading Entry ( {{ date('Y-m-d') }} )
+                    <div class="card-body" style="overflow: scroll">
+                        <h4 class="card-title d-flex align-items-center justify-content-between">Meter Reading Entry ( {{ date('Y-m-d') }} )
                             <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
                         </h4>
                         <div class="card card-primary">
@@ -27,8 +33,9 @@
                                                         <th>Time</th>
                                                         <th>Main Meter</th>
                                                         <th>Check Meter</th>
-                                                        <th>Accuracy</th> <!-- Updated Header -->
+                                                        <th>Accuracy</th>
                                                         <th>Difference</th>
+                                                        <th>Percentage Difference</th>
                                                         <th>Remarks</th>
                                                     </tr>
                                                 </thead>
@@ -43,7 +50,7 @@
                                                                 @if(\Carbon\Carbon::parse($time)->addHour()->format('H:i') == '00:00')
                                                                     24:00
                                                                 @else
-                                                                {{ \Carbon\Carbon::parse($time)->addHour()->format('H:i') }}
+                                                                    {{ \Carbon\Carbon::parse($time)->addHour()->format('H:i') }}
                                                                 @endif
                                                             </td>
                                                             <td>
@@ -58,6 +65,9 @@
                                                             </td>
                                                             <td>
                                                                 <input type="text" name="difference[{{ $i }}]" class="form-control" id="difference_{{ $i }}" value="{{ isset($reading->main_meter) && isset($reading->show_meter) ? $reading->main_meter - $reading->show_meter : '' }}" readonly>
+                                                            </td>
+                                                            <td>
+                                                                <input type="text" name="percentage_difference[{{ $i }}]" class="form-control" id="percentage_difference_{{ $i }}" value="{{ isset($reading->main_meter) && $reading->main_meter != 0 ? number_format((($reading->main_meter - $reading->show_meter) * 100) / $reading->main_meter, 2) : '' }}" readonly>
                                                             </td>
                                                             <td>
                                                                 <input type="text" name="remarks[{{ $i }}]" class="form-control" value="{{ $reading->remarks ?? '' }}">
@@ -81,6 +91,7 @@
         </div>
     </div>
 @endsection
+
 @section('scripts')
     <script>
         $('#addData').on('submit', function(e) {
@@ -100,7 +111,7 @@
                     console.log('ajax fired');
                 },
                 success: function(data) {
-                    if (data.status == true) {
+                    if (data.status === true) {
                         toastr['success'](data.message);
                         window.location.href = data.url;
                     } else {
@@ -108,27 +119,28 @@
                     }
                 },
                 error: function(xhr) {
-                    var i = 0;
                     $('.help-block').remove();
                     $('.has-error').removeClass('has-error');
                     for (var error in xhr.responseJSON.errors) {
-                        $('#add_' + error).removeClass('has-error');
                         $('#add_' + error).addClass('has-error');
                         $('#error_' + error).html(
-                            '<span class="help-block ' + error + '">*' + xhr
-                            .responseJSON.errors[
-                                error] + '</span>');
-                        i++;
+                            '<span class="help-block">*' + xhr.responseJSON.errors[error] + '</span>'
+                        );
                     }
                 }
             });
         });
 
         $('.main-meter, .show-meter').on('input', function() {
-    var index = $(this).attr('name').match(/\d+/)[0];
-    var mainMeter = parseFloat($('#main_meter_' + index).val()) || 0;
-    var showMeter = parseFloat($('#show_meter_' + index).val()) || 0;
-    $('#difference_' + index).val(mainMeter - showMeter);
-});
+            var index = $(this).attr('name').match(/\d+/)[0];
+            var mainMeter = parseFloat($('#main_meter_' + index).val()) || 0;
+            var checkMeter = parseFloat($('#show_meter_' + index).val()) || 0;
+
+            var difference = mainMeter - checkMeter;
+            var percentageDifference = mainMeter !== 0 ? ((difference * 100) / mainMeter) : 0;
+
+            $('#difference_' + index).val(difference);
+            $('#percentage_difference_' + index).val(percentageDifference.toFixed(2));
+        });
     </script>
 @endsection

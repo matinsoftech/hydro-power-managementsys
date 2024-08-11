@@ -17,6 +17,8 @@ class FrontController extends Controller
     public function map()
     {
         $stations = Station::with('childs.childs.childs')->where('station_level',1)->get();
-        return view('front.showmap',compact('stations'));
+        $googleMapsApiKey = config('services.google_maps.api_key');// or config('services.google_maps.api_key') if you set it in
+        // return $googleMapsApiKey;
+        return view('front.showmap',compact('stations','googleMapsApiKey'));
     }
 }

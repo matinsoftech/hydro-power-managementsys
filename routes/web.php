@@ -20,3 +20,4 @@ Route::get('/run', function () {
     // Return a simple message
     return 'Artisan commands have been executed.';
 });
+

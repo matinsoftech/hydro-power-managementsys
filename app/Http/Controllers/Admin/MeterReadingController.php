@@ -17,30 +17,35 @@ class MeterReadingController extends Controller
      */
     public function index(Request $request)
     {
-        if($request->is('api/*')) {
+        if ($request->is('api/*')) {
             return $this->apiIndex($request);
         }
         if ($request->ajax()) {
             $query = MeterReading::query();
+
+            // Check if both startDate and endDate are present
+            if ($request->has('startDate') && $request->has('endDate') && !empty($request->input('startDate')) && !empty($request->input('endDate'))) {
+                $startDate = Carbon::parse($request->input('startDate'))->startOfDay();
+                $endDate = Carbon::parse($request->input('endDate'))->endOfDay();
+                $query->whereBetween('date', [$startDate, $endDate]);
+            }
+
             return DataTables::of($query->with('createdBy'))
                 ->addIndexColumn()
                 ->editColumn('created_by', function ($row) {
                     return $row->createdBy->name ?? 'No user';
                 })
                 ->editColumn('time', function ($row) {
-                    if(Carbon::parse($row->time)->addHour()->format('H:i') == '00:00'){
+                    if (Carbon::parse($row->time)->addHour()->format('H:i') == '00:00') {
                         return '24:00';
-                    }else{
+                    } else {
                         return Carbon::parse($row->time)->addHour()->format('H:i');
                     }
-                })
-                ->editColumn('created_by',function ($row){
-                    return $row->createdBy->name ?? 'No user';
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
                                 <a class="btn btn-sm btn-primary" href="' . route('admin.meter-reading.edit', $row->id) . '"><i class="fa fa-edit"></i></a>
-                                <button class="btn btn-sm btn-danger btnDelete"  data-url="' . route('admin.meter-reading.destroy', $row->id) . '"><i class="fa fa-x"></i></button>
+                                <button class="btn btn-sm btn-danger btnDelete" data-url="' . route('admin.meter-reading.destroy', $row->id) . '"><i class="fa fa-x"></i></button>
                             </div>';
                 })
                 ->rawColumns(['action'])
