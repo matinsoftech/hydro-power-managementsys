@@ -35,7 +35,7 @@
                                                         <th>Check Meter</th>
                                                         <th>Accuracy</th>
                                                         <th>Difference</th>
-                                                        <th>Percentage Difference</th>
+                                                        <th>Percentage</th>
                                                         <th>Remarks</th>
                                                     </tr>
                                                 </thead>
@@ -67,7 +67,7 @@
                                                                 <input type="text" name="difference[{{ $i }}]" class="form-control" id="difference_{{ $i }}" value="{{ isset($reading->main_meter) && isset($reading->show_meter) ? $reading->main_meter - $reading->show_meter : '' }}" readonly>
                                                             </td>
                                                             <td>
-                                                                <input type="text" name="percentage_difference[{{ $i }}]" class="form-control" id="percentage_difference_{{ $i }}" value="{{ isset($reading->main_meter) && $reading->main_meter != 0 ? number_format((($reading->main_meter - $reading->show_meter) * 100) / $reading->main_meter, 2) : '' }}" readonly>
+                                                                <input type="text" name="percentage_difference[{{ $i }}]" class="form-control" id="percentage_difference_{{ $i }}" value="{{ isset($reading->main_meter) && $reading->main_meter != 0 ? number_format((($reading->main_meter - $reading->show_meter) * 100) / $reading->main_meter, 2) . '%' : '' }}" readonly>
                                                             </td>
                                                             <td>
                                                                 <input type="text" name="remarks[{{ $i }}]" class="form-control" value="{{ $reading->remarks ?? '' }}">
@@ -140,7 +140,7 @@
             var percentageDifference = mainMeter !== 0 ? ((difference * 100) / mainMeter) : 0;
 
             $('#difference_' + index).val(difference);
-            $('#percentage_difference_' + index).val(percentageDifference.toFixed(2));
+            $('#percentage_difference_' + index).val(percentageDifference.toFixed(2) + '%');
         });
     </script>
 @endsection

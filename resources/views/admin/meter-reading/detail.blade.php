@@ -4,88 +4,95 @@
 
 @section('content')
 
-    <div class="container-fluid">
-        <!-- ============================================================== -->
-        <!-- Start Page Content -->
-        <!-- ============================================================== -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Meter Reading Detail By Date </h4>
+<div class="container-fluid">
+    <!-- ============================================================== -->
+    <!-- Start Page Content -->
+    <!-- ============================================================== -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Meter Reading Detail By Date</h4>
 
-                        <form action="{{ route('admin.meter-reading.detail') }}" method="GET">
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <input type="date" name="date" id="date" class="form-control" value="{{ isset($date) ? $date : '' }}">
-                                </div>
-                                <div class="col-sm-6">
-                                    <button type="submit" class="btn btn-primary">Search</button>
-                                </div>
+                    <form action="{{ route('admin.meter-reading.detail') }}" method="GET">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <input type="date" name="date" id="date" class="form-control" value="{{ isset($date) ? $date : '' }}">
                             </div>
-                        </form>
-
-                    </div>
-
-                    @if(isset($date))
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Time</th>
-                                        <th>Main Meter</th>
-                                        <th>Show Meter</th>
-                                        <th>Accuracy</th> <!-- Added column -->
-                                        <th>Remarks</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for ($i = 0; $i <= 23; $i++)
-                                        @php
-                                            $time = sprintf('%02d:00:00', $i);
-                                            $reading = $meterReadings->get($time);
-                                        @endphp
-                                        <tr>
-                                            <td>
-                                                @if(\Carbon\Carbon::parse($time)->addHour()->format('H:i') == '00:00')
-                                                    24:00
-                                                @else
-                                                {{ \Carbon\Carbon::parse($time)->addHour()->format('H:i') }}
-                                                @endif
-                                            </td>
-                                            <td>
-                                                {{ $reading->main_meter ?? '' }}
-                                            </td>
-                                            <td>
-                                                {{ $reading->show_meter ?? '' }}
-                                            </td>
-                                            <td>
-                                                {{ $reading->accuracy ?? '' }} <!-- Added column -->
-                                            </td>
-                                            <td>
-                                                {{ $reading->remarks ?? '' }}
-                                            </td>
-                                        </tr>
-                                    @endfor
-                                </tbody>
-                            </table>
+                            <div class="col-sm-6">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                            </div>
                         </div>
-                    </div>
-
-                    @endif
+                    </form>
                 </div>
-            </div>
 
+                @if(isset($date))
+                <div class="row">
+                    <div class="col-sm-12">
+                        <table class="table table-bordered" id="myTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Main Meter</th>
+                                    <th>Show Meter</th>
+                                    <th>Accuracy</th>
+                                    <th>Difference</th>
+                                    <th>Percentage</th> <!-- Added column -->
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for ($i = 0; $i <= 23; $i++)
+                                    @php
+                                        $time = sprintf('%02d:00:00', $i);
+                                        $reading = $meterReadings->get($time);
+                                        $percentageDifference = number_format(floatval($reading->percentageDifference ?? 0.00), 1); // Convert to float
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            @if(\Carbon\Carbon::parse($time)->addHour()->format('H:i') == '00:00')
+                                                24:00
+                                            @else
+                                                {{ \Carbon\Carbon::parse($time)->addHour()->format('H:i') }}
+                                            @endif
+                                        </td>
+                                        <td>
+                                            {{ $reading->main_meter ?? '' }}
+                                        </td>
+                                        <td>
+                                            {{ $reading->show_meter ?? '' }}
+                                        </td>
+                                        <td>
+                                            {{ $reading->accuracy ?? '' }}
+                                        </td>
+                                        <td>
+                                            {{ $reading->difference ?? '' }}
+                                        </td>
+                                        <td>
+                                            {{ $percentageDifference }}%
+                                        </td>
+                                        <td>
+                                            {{ $reading->remarks ?? '' }}
+                                        </td>
+                                    </tr>
+                                @endfor
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
+            </div>
         </div>
     </div>
+</div>
 @endsection
 
 @section('scripts')
-    <script>
+<script>
+    $(document).ready(function() {
         var myTable = $("#myTable").DataTable({
             serverSide: true,
-            processing: true,
+            processing: false, // Disable processing indicator
             "language": {
                 "paginate": {
                     "previous": "<",
@@ -101,6 +108,7 @@
             ],
             ajax: {
                 url: "{{ route('admin.meter-reading.index') }}",
+                dataSrc: 'data'
             },
             columns: [
                 {
@@ -126,8 +134,16 @@
                     data: "show_meter"
                 },
                 {
-                    name: "accuracy", // Added column
+                    name: "accuracy",
                     data: "accuracy"
+                },
+                {
+                    name: "difference",
+                    data: "difference"
+                },
+                {
+                    name: "percentage_difference", // Ensure this matches the backend field
+                    data: "percentage_difference"
                 },
                 {
                     name: "remarks",
@@ -143,5 +159,6 @@
                 },
             ]
         });
-    </script>
+    });
+</script>
 @endsection
