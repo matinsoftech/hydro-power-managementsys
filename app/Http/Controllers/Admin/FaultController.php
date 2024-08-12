@@ -15,37 +15,50 @@ class FaultController extends Controller
 {
     public function index(Request $request)
     {
-
-        if($request->is('api/*')){
+        if ($request->is('api/*')) {
             return $this->apiIndex($request);
         }
+
         if ($request->ajax()) {
             $query = Fault::query();
+
+            // Apply date filter if both start and end dates are provided
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = $request->input('start_date');
+                $endDate = $request->input('end_date');
+
+                // Check if both dates are valid and not empty
+                if (!empty($startDate) && !empty($endDate)) {
+                    $query->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59']);
+                }
+            }
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->editColumn('photo', function ($row) {
-                    if(!$row->photo) return 'No image';
-                    return '<img src="'.asset('FaultPhoto/'.$row->photo).'" width="50" height="50"/>';
+                    if (!$row->photo) return 'No image';
+                    return '<img src="' . asset('FaultPhoto/' . $row->photo) . '" width="50" height="50"/>';
                 })
                 ->editColumn('video', function ($row) {
-                    if(!$row->video) return 'No video';
-                    return '<video width="50" height="50" controls><source src="'.asset('FaultVideo/'.$row->video).'" type="video/mp4"></video>';
+                    if (!$row->video) return 'No video';
+                    return '<video width="50" height="50" controls><source src="' . asset('FaultVideo/' . $row->video) . '" type="video/mp4"></video>';
                 })
-                ->editColumn('solved_by',function ($row){
+                ->editColumn('solved_by', function ($row) {
                     return $row->solvedBy->name ?? 'No user';
                 })
-                ->editColumn('found_by',function ($row){
+                ->editColumn('found_by', function ($row) {
                     return $row->foundBy->name ?? 'No user';
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
-                                <a class="btn btn-sm btn-primary" href="'.route('admin.fault.edit',$row->id).'"><i class="fa fa-edit"></i></a>
-                                <button class="btn btn-sm btn-danger btnDelete"  data-url="'.route('admin.fault.destroy',$row->id).'"><i class="fa fa-x"></i></button>
+                                <a class="btn btn-sm btn-primary" href="' . route('admin.fault.edit', $row->id) . '"><i class="fa fa-edit"></i></a>
+                                <button class="btn btn-sm btn-danger btnDelete" data-url="' . route('admin.fault.destroy', $row->id) . '"><i class="fa fa-x"></i></button>
                             </div>';
                 })
-                ->rawColumns(['photo','video','solved_by','action'])
+                ->rawColumns(['photo', 'video', 'solved_by', 'action'])
                 ->make(true);
         }
+
         return view('admin.fault.index');
     }
 

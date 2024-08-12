@@ -15,6 +15,23 @@
                         <h4 class="card-title">Meter Reading List
                             <a href="{{ route('admin.meter-reading.create') }}" class="btn btn-sm btn-primary float-right">Add Meter Reading</a>
                         </h4>
+                        {{-- start filter --}}
+                        <br>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="startDate">Start Date</label>
+                                <input type="date" id="startDate" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="endDate">End Date</label>
+                                <input type="date" id="endDate" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <button id="filterBtn" class="btn btn-primary mt-4">Filter</button>
+                            </div>
+                        </div>
+                        <br>
+                        {{-- end filter --}}
                         <div class="table-responsive">
                             <table id="myTable" class="table table-striped table-bordered">
                                 <thead>
@@ -43,27 +60,32 @@
 @endsection
 @section('scripts')
 <script>
-    var myTable = $("#myTable").DataTable({
-        serverSide: true,
-        processing: true,
-        "language": {
-            "paginate": {
-                "previous": "<",
-                "next": ">"
-            },
-            "search": "", // Remove search box
-            "searchPlaceholder": "Search...", // Optional placeholder text
-            "lengthMenu": "_MENU_",
+   var myTable = $("#myTable").DataTable({
+    serverSide: true,
+    processing: true,
+    language: {
+        paginate: {
+            previous: "<",
+            next: ">"
         },
-        lengthMenu: [
-            [10, 25, 50, 100, 250, 500],
-            [10, 25, 50, 100, 250, 500]
-        ],
-        ajax: {
-            url: "{{ route('admin.meter-reading.index') }}",
-        },
-        columns: [
-            { name: "DT_RowIndex", data: "DT_RowIndex", orderable: false, searchable: false },
+        search: "",
+        searchPlaceholder: "Search...",
+        lengthMenu: "_MENU_",
+    },
+    lengthMenu: [
+        [10, 25, 50, 100, 250, 500],
+        [10, 25, 50, 100, 250, 500]
+    ],
+    ajax: {
+        url: "{{ route('admin.meter-reading.index') }}",
+        data: function(d) {
+            d.startDate = $('#startDate').val();
+            d.endDate = $('#endDate').val();
+        }
+    },
+    columns: [
+        // Your columns here
+        { name: "DT_RowIndex", data: "DT_RowIndex", orderable: false, searchable: false },
             { name: "date", data: "date" },
             { name: "time", data: "time" },
             { name: "main_meter", data: "main_meter" },
@@ -72,14 +94,20 @@
             { name: "remarks", data: "remarks" },
             { name: "created_by", data: "created_by" },
             { name: "action", data: "action" },
-        ],
-        createdRow: function(row, data, dataIndex) {
-            var accuracy = parseFloat(data.accuracy);
-            if (accuracy > 0.2) {
-                $(row).find('td:eq(5)').css('color', 'red'); // Apply red color to accuracy column
-            }
+    ],
+    createdRow: function(row, data, dataIndex) {
+        var accuracy = parseFloat(data.accuracy);
+        if (accuracy > 0.2) {
+            $(row).find('td:eq(5)').css('color', 'red');
         }
-    });
+    }
+});
+
+$('#filterBtn').on('click', function() {
+    myTable.draw();
+});
+
+
 
     $('#deleteForm').on('submit', function(e) {
         e.preventDefault();
@@ -128,4 +156,10 @@
         $('#deleteModal').modal('show');
     });
 </script>
+
+{{-- filter start --}}
+<script>
+
+</script>
+{{-- filter end --}}
 @endsection

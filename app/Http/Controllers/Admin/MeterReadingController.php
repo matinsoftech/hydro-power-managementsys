@@ -17,30 +17,35 @@ class MeterReadingController extends Controller
      */
     public function index(Request $request)
     {
-        if($request->is('api/*')) {
+        if ($request->is('api/*')) {
             return $this->apiIndex($request);
         }
         if ($request->ajax()) {
             $query = MeterReading::query();
+
+            // Check if both startDate and endDate are present
+            if ($request->has('startDate') && $request->has('endDate') && !empty($request->input('startDate')) && !empty($request->input('endDate'))) {
+                $startDate = Carbon::parse($request->input('startDate'))->startOfDay();
+                $endDate = Carbon::parse($request->input('endDate'))->endOfDay();
+                $query->whereBetween('date', [$startDate, $endDate]);
+            }
+
             return DataTables::of($query->with('createdBy'))
                 ->addIndexColumn()
                 ->editColumn('created_by', function ($row) {
                     return $row->createdBy->name ?? 'No user';
                 })
                 ->editColumn('time', function ($row) {
-                    if(Carbon::parse($row->time)->addHour()->format('H:i') == '00:00'){
+                    if (Carbon::parse($row->time)->addHour()->format('H:i') == '00:00') {
                         return '24:00';
-                    }else{
+                    } else {
                         return Carbon::parse($row->time)->addHour()->format('H:i');
                     }
-                })
-                ->editColumn('created_by',function ($row){
-                    return $row->createdBy->name ?? 'No user';
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
                                 <a class="btn btn-sm btn-primary" href="' . route('admin.meter-reading.edit', $row->id) . '"><i class="fa fa-edit"></i></a>
-                                <button class="btn btn-sm btn-danger btnDelete"  data-url="' . route('admin.meter-reading.destroy', $row->id) . '"><i class="fa fa-x"></i></button>
+                                <button class="btn btn-sm btn-danger btnDelete" data-url="' . route('admin.meter-reading.destroy', $row->id) . '"><i class="fa fa-x"></i></button>
                             </div>';
                 })
                 ->rawColumns(['action'])
@@ -75,14 +80,37 @@ class MeterReadingController extends Controller
     }
 
     public function detail(Request $request)
-    {
-        if($request->date){
-            $date = $request->date;
-            $meterReadings = MeterReading::where('date', $date)->get()->keyBy('time');
-            return view('admin.meter-reading.detail',compact('meterReadings','date'));
+{
+    $date = $request->date;
+
+    if ($date) {
+        // Validate date format
+        $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+        ]);
+
+        // Retrieve meter readings for the specified date and key by time
+        $meterReadings = MeterReading::where('date', $date)->get()->keyBy('time');
+
+        // Calculate differences and percentages
+        foreach ($meterReadings as $key => $reading) {
+            $mainMeter = $reading->main_meter ?? 0;
+            $showMeter = $reading->show_meter ?? 0;
+
+            // Calculate difference and percentage difference
+            $difference = $mainMeter - $showMeter;
+            $percentageDifference = ($showMeter != 0) ? (($difference / $mainMeter) * 100) : 0;
+
+            // Attach calculations to the reading
+            $reading->difference = $difference;
+            $reading->percentageDifference = rtrim(number_format($percentageDifference, 2), '0'); // Format to 1 decimal place if necessary
         }
-        return view('admin.meter-reading.detail');
+
+        return view('admin.meter-reading.detail', compact('meterReadings', 'date'));
     }
+
+    return view('admin.meter-reading.detail');
+}
 
     public function apiDetail(Request $request)
     {
@@ -139,8 +167,28 @@ class MeterReadingController extends Controller
     {
         $date = $meterReading->date;
         $meterReadings = MeterReading::where('date', $date)->get()->keyBy('time');
-        return view('admin.meter-reading.edit', compact('meterReadings','date'));
+
+        // Calculate difference and percentage differences
+        foreach ($meterReadings as $time => $reading) {
+            $mainMeterValue = $reading->main_meter; // Replace with actual attribute
+            $showMeterValue = $reading->show_meter; // Replace with actual attribute
+
+            if ($mainMeterValue != 0) {
+                $difference = $showMeterValue - $mainMeterValue;
+                $percentageDifference = ($difference / $mainMeterValue) * 100;
+            } else {
+                $difference = 0; // Handle division by zero if needed
+                $percentageDifference = 0;
+            }
+
+            // Add calculated values to the reading object
+            $reading->difference = $difference;
+            $reading->percentage_difference = $percentageDifference;
+        }
+
+        return view('admin.meter-reading.edit', compact('meterReadings', 'date'));
     }
+
 
     /**
      * Update the specified resource in storage.

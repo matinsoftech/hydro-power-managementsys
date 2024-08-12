@@ -60,7 +60,7 @@
 
 
     <script src="https://hydropower.merogaditracker.com/assets/libs/jquery/dist/jquery.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&libraries=places" async
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&libraries=places" async
     defer></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {

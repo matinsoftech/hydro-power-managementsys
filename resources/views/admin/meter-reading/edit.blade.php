@@ -3,84 +3,126 @@
 @section('title', 'Meter Reading Entry')
 
 @section('content')
+<style>
+    .table>:not(:last-child)>:last-child>*{
+        min-width: 150px;
+    }
+</style>
 
-    <div class="container-fluid">
-        <!-- ============================================================== -->
-        <!-- Start Page Content -->
-        <!-- ============================================================== -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Meter Reading Entry ( {{ $date }} )
-                            <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
-                        </h4>
-                        <div class="card card-primary">
-                            <div class="card-body">
-                                <form id="addData" action="{{ route('admin.meter-reading.store') }}" method="POST">
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <table class="table table-bordered">
-                                                <thead>
+<div class="container-fluid">
+    <!-- ============================================================== -->
+    <!-- Start Page Content -->
+    <!-- ============================================================== -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body" style="overflow: scroll">
+                    <h4 class="card-title">Meter Reading Entry ( {{ $date }} )
+                        <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
+                    </h4>
+                    <div class="card card-primary">
+                        <div class="card-body">
+                            <form id="addData" action="{{ route('admin.meter-reading.store') }}" method="POST">
+                                @csrf
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Time</th>
+                                                    <th>Main Meter</th>
+                                                    <th>Check Meter</th>
+                                                    <th>Accuracy</th>
+                                                    <th>Difference</th>
+                                                    <th>Percentage</th>
+                                                    <th>Remarks</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @for ($i = 0; $i <= 23; $i++)
+                                                    @php
+                                                        $time = sprintf('%02d:00:00', $i);
+                                                        $reading = $meterReadings->get($time);
+                                                    @endphp
                                                     <tr>
-                                                        <th>Time</th>
-                                                        <th>Main Meter</th>
-                                                        <th>Check Meter</th>
-                                                        <th>Accuracy</th> <!-- New Header for Accuracy -->
-                                                        <th>Remarks</th>
+                                                        <td>
+                                                            @if(\Carbon\Carbon::parse($time)->addHour()->format('H:i') == '00:00')
+                                                                24:00
+                                                            @else
+                                                            {{ \Carbon\Carbon::parse($time)->addHour()->format('H:i') }}
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <input type="hidden" name="time[{{ $i }}]" value="{{ $time }}">
+                                                            <input type="number" name="main_meter[{{ $i }}]" class="form-control" value="{{ $reading->main_meter ?? '' }}">
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" name="show_meter[{{ $i }}]" class="form-control" value="{{ $reading->show_meter ?? '' }}">
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" step="0.01" name="accuracy[{{ $i }}]" class="form-control" value="{{ $reading->accuracy ?? '' }}">
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="difference[{{ $i }}]" class="form-control" value="{{ $reading->difference ?? '' }}" readonly>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="percentage[{{ $i }}]" class="form-control" value="{{ $reading->percentage ?? '' }}" readonly>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="remarks[{{ $i }}]" class="form-control" value="{{ $reading->remarks ?? '' }}">
+                                                        </td>
                                                     </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @for ($i = 0; $i <= 23; $i++)
-                                                        @php
-                                                            $time = sprintf('%02d:00:00', $i);
-                                                            $reading = $meterReadings->get($time);
-                                                        @endphp
-                                                        <tr>
-                                                            <td>
-                                                                @if(\Carbon\Carbon::parse($time)->addHour()->format('H:i') == '00:00')
-                                                                    24:00
-                                                                @else
-                                                                {{ \Carbon\Carbon::parse($time)->addHour()->format('H:i') }}
-                                                                @endif
-                                                            </td>
-                                                            <td>
-                                                                <input type="hidden" name="time[{{ $i }}]" value="{{ $time }}">
-                                                                <input type="number" name="main_meter[{{ $i }}]" class="form-control" value="{{ $reading->main_meter ?? '' }}">
-                                                            </td>
-                                                            <td>
-                                                                <input type="number" name="show_meter[{{ $i }}]" class="form-control" value="{{ $reading->show_meter ?? '' }}">
-                                                            </td>
-                                                            <td>
-                                                                <input type="number" step="0.01" name="accuracy[{{ $i }}]" class="form-control" value="{{ $reading->accuracy ?? '' }}"> <!-- New Accuracy Field -->
-                                                            </td>
-                                                            <td>
-                                                                <input type="text" name="remarks[{{ $i }}]" class="form-control" value="{{ $reading->remarks ?? '' }}">
-                                                            </td>
-                                                        </tr>
-                                                    @endfor
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div class="col-sm-12">
-                                            <input type="hidden" name="date" value="{{ $date }}">
-                                            <button class="btn btn-sm btn-primary float-right p-10 mt-10">Save</button>
-                                        </div>
+                                                @endfor
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </form>
-                            </div>
+                                    <div class="col-sm-12">
+                                        <input type="hidden" name="date" value="{{ $date }}">
+                                        <button class="btn btn-sm btn-primary float-right p-10 mt-10">Save</button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
+</div>
 @endsection
 
 @section('scripts')
-    <script>
+<script>
+    function calculatePercentage(index) {
+        var mainMeterInput = document.querySelector('input[name="main_meter[' + index + ']"]');
+        var showMeterInput = document.querySelector('input[name="show_meter[' + index + ']"]');
+        var differenceInput = document.querySelector('input[name="difference[' + index + ']"]');
+        var percentageInput = document.querySelector('input[name="percentage[' + index + ']"]');
+
+        var mainMeter = parseFloat(mainMeterInput.value) || 0;
+        var showMeter = parseFloat(showMeterInput.value) || 0;
+
+        var difference = showMeter - mainMeter;
+        var percentage = 0;
+        if (mainMeter !== 0) {  // Ensure mainMeter is not zero to avoid division by zero
+            percentage = (difference * 100) / mainMeter;
+        }
+
+        differenceInput.value = difference.toFixed(2); // Format to 2 decimal places
+        percentageInput.value = percentage.toFixed(1) + '%'; // Format to 1 decimal place and add percentage sign
+
+        console.log('Index:', index, 'Main Meter:', mainMeter, 'Show Meter:', showMeter, 'Difference:', difference, 'Percentage:', percentage);
+    }
+
+    function calculateAllPercentages() {
+        for (var i = 0; i <= 23; i++) {
+            calculatePercentage(i);
+        }
+    }
+
+    $(document).ready(function() {
+        calculateAllPercentages(); // Calculate percentages when the page loads
+
         $('#addData').on('submit', function(e) {
             e.preventDefault();
             let url = $(this).attr('action');
@@ -95,7 +137,7 @@
                 cache: false,
                 processData: false,
                 beforeSend: function() {
-                    console.log('ajax fired');
+                    // Optionally add some feedback here
                 },
                 success: function(data) {
                     if (data.status == true) {
@@ -121,5 +163,6 @@
                 }
             });
         });
-    </script>
+    });
+</script>
 @endsection
