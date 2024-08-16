@@ -8,87 +8,85 @@
         min-width: 150px;
     }
 </style>
+<style>
+    .table>:not(:last-child)>:last-child>*{
+        min-width: 150px;
+    }
+</style>
 
-<div class="container-fluid">
-    <!-- ============================================================== -->
-    <!-- Start Page Content -->
-    <!-- ============================================================== -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body" style="overflow: scroll">
-                    <h4 class="card-title">Meter Reading Entry ( {{ $date }} )
-                        <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
-                    </h4>
-                    <div class="card card-primary">
-                        <div class="card-body">
-                            <form id="addData" action="{{ route('admin.meter-reading.store') }}" method="POST">
-                                @csrf
-                                <div class="row">
-                                    <div class="col-sm-12">
-                                        <table class="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th>Time</th>
-                                                    <th>Main Meter</th>
-                                                    <th>Check Meter</th>
-                                                    <th>Accuracy</th>
-                                                    <th>Difference</th>
-                                                    <th>Percentage</th>
-                                                    <th>Remarks</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @for ($i = 0; $i <= 23; $i++)
-                                                    @php
-                                                        $time = sprintf('%02d:00:00', $i);
-                                                        $reading = $meterReadings->get($time);
-                                                    @endphp
+    <div class="container-fluid">
+        <!-- ============================================================== -->
+        <!-- Start Page Content -->
+        <!-- ============================================================== -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body" style="overflow: scroll">
+                        <h4 class="card-title">Meter Reading Entry ( {{ $date }} )
+                            <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
+                        </h4>
+                        <div class="card card-primary">
+                            <div class="card-body">
+                                <form id="addData" action="{{ route('admin.meter-reading.store') }}" method="POST">
+                                    @csrf
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <table class="table table-bordered">
+                                                <thead>
                                                     <tr>
-                                                        <td>
-                                                            @if(\Carbon\Carbon::parse($time)->addHour()->format('H:i') == '00:00')
-                                                                24:00
-                                                            @else
-                                                            {{ \Carbon\Carbon::parse($time)->addHour()->format('H:i') }}
-                                                            @endif
-                                                        </td>
-                                                        <td>
-                                                            <input type="hidden" name="time[{{ $i }}]" value="{{ $time }}">
-                                                            <input type="number" name="main_meter[{{ $i }}]" class="form-control" value="{{ $reading->main_meter ?? '' }}">
-                                                        </td>
-                                                        <td>
-                                                            <input type="number" name="show_meter[{{ $i }}]" class="form-control" value="{{ $reading->show_meter ?? '' }}">
-                                                        </td>
-                                                        <td>
-                                                            <input type="number" step="0.01" name="accuracy[{{ $i }}]" class="form-control" value="{{ $reading->accuracy ?? '' }}">
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" name="difference[{{ $i }}]" class="form-control" value="{{ $reading->difference ?? '' }}" readonly>
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" name="percentage[{{ $i }}]" class="form-control" value="{{ $reading->percentage ?? '' }}" readonly>
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" name="remarks[{{ $i }}]" class="form-control" value="{{ $reading->remarks ?? '' }}">
-                                                        </td>
+                                                        <th>Time</th>
+                                                        <th>Main Meter</th>
+                                                        <th>Check Meter</th>
+                                                        <th>Accuracy</th> <!-- New Header for Accuracy -->
+                                                        <th>Remarks</th>
                                                     </tr>
-                                                @endfor
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    @for ($i = 0; $i <= 23; $i++)
+                                                        @php
+                                                            $time = sprintf('%02d:00:00', $i);
+                                                            $reading = $meterReadings->get($time);
+                                                        @endphp
+                                                        <tr>
+                                                            <td>
+                                                                @if(\Carbon\Carbon::parse($time)->addHour()->format('H:i') == '00:00')
+                                                                    24:00
+                                                                @else
+                                                                {{ \Carbon\Carbon::parse($time)->addHour()->format('H:i') }}
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                <input type="hidden" name="time[{{ $i }}]" value="{{ $time }}">
+                                                                <input type="number" name="main_meter[{{ $i }}]" class="form-control" value="{{ $reading->main_meter ?? '' }}">
+                                                            </td>
+                                                            <td>
+                                                                <input type="number" name="show_meter[{{ $i }}]" class="form-control" value="{{ $reading->show_meter ?? '' }}">
+                                                            </td>
+                                                            <td>
+                                                                <input type="number" step="0.01" name="accuracy[{{ $i }}]" class="form-control" value="{{ $reading->accuracy ?? '' }}"> <!-- New Accuracy Field -->
+                                                            </td>
+                                                            <td>
+                                                                <input type="text" name="remarks[{{ $i }}]" class="form-control" value="{{ $reading->remarks ?? '' }}">
+                                                            </td>
+                                                        </tr>
+                                                    @endfor
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <input type="hidden" name="date" value="{{ $date }}">
+                                            <button class="btn btn-sm btn-primary float-right p-10 mt-10">Save</button>
+                                        </div>
                                     </div>
-                                    <div class="col-sm-12">
-                                        <input type="hidden" name="date" value="{{ $date }}">
-                                        <button class="btn btn-sm btn-primary float-right p-10 mt-10">Save</button>
-                                    </div>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
-</div>
 @endsection
 
 @section('scripts')

@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\MeterReadingController;
 use App\Http\Controllers\Admin\StationController;
 use App\Http\Controllers\Admin\ImprtExportController;
 
+
 // Notes: @middleware:admin @prefix:admin @as:admin.
 
 // Admin Settings
@@ -32,7 +33,3 @@ Route::post('sub-station',[StationController::class,'getSubStation'])->name('sta
 
 Route::resource('meter-reading', MeterReadingController::class);
 Route::get('meter-reading-detail', [MeterReadingController::class, 'detail'])->name('meter-reading.detail');
-
-Route::get('import_export', [ImprtExportController::class, 'import_export'])->name('import_export');
-Route::post('import_file', [ImprtExportController::class, 'import_file'])->name('import_file');
-Route::get('export_file', [ImprtExportController::class, 'export_file'])->name('export_file');
