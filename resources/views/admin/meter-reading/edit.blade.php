@@ -3,6 +3,11 @@
 @section('title', 'Meter Reading Entry')
 
 @section('content')
+<style>
+    .table>:not(:last-child)>:last-child>*{
+        min-width: 150px;
+    }
+</style>
 
     <div class="container-fluid">
         <!-- ============================================================== -->
@@ -11,7 +16,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-body">
+                    <div class="card-body" style="overflow: scroll">
                         <h4 class="card-title">Meter Reading Entry ( {{ $date }} )
                             <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
                         </h4>

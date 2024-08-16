@@ -18,18 +18,26 @@ class GridController extends Controller
      */
     public function index(Request $request)
     {
-        if($request->is('api/*')) return $this->apiIndex($request);
+        if ($request->is('api/*')) return $this->apiIndex($request);
         if ($request->ajax()) {
             $query = Grid::query();
+
+            // Check if both startDate and endDate are provided
+            if ($request->has('startDate') && $request->has('endDate') && !empty($request->input('startDate')) && !empty($request->input('endDate'))) {
+                $startDate = $request->input('startDate');
+                $endDate = $request->input('endDate');
+                $query->whereBetween('date', [$startDate, $endDate]);
+            }
+
             return DataTables::of($query->with('createdBy'))
                 ->addIndexColumn()
-                ->editColumn('created_by',function ($row){
+                ->editColumn('created_by', function ($row) {
                     return $row->createdBy->name ?? 'No user';
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="button-group" role="group">
-                                <a class="btn btn-sm btn-primary" href="'.route('admin.grid.edit',$row->id).'"><i class="fa fa-edit"></i></a>
-                                <button class="btn btn-sm btn-danger btnDelete"  data-url="'.route('admin.grid.destroy',$row->id).'"><i class="fa fa-x"></i></button>
+                                <a class="btn btn-sm btn-primary" href="'.route('admin.grid.edit', $row->id).'"><i class="fa fa-edit"></i></a>
+                                <button class="btn btn-sm btn-danger btnDelete" data-url="'.route('admin.grid.destroy', $row->id).'"><i class="fa fa-x"></i></button>
                             </div>';
                 })
                 ->rawColumns(['action'])

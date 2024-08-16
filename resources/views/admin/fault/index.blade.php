@@ -16,6 +16,16 @@
                             Fault List
                             <a href="{{ route('admin.fault.create') }}" class="btn btn-sm btn-primary float-right">Add Fault</a>
                         </h4>
+                               <!-- Date Filter -->
+                               <br>
+                    <div class="form-group">
+                        <label for="start_date">Start Date:</label>
+                        <input type="date" id="start_date" class="form-control">
+                        <label for="end_date">End Date:</label>
+                        <input type="date" id="end_date" class="form-control">
+                        <button id="filter" class="btn btn-primary mt-2">Filter</button>
+                    </div>
+                    <br>
                         <div class="table-responsive">
                             <table id="myTable" class="table table-striped table-bordered">
                                 <thead>
@@ -65,8 +75,9 @@
     </div>
 @endsection
 @section('scripts')
-    <script>
-        var myTable = $("#myTable").DataTable({
+<script>
+    $(document).ready(function() {
+        var table = $("#myTable").DataTable({
             serverSide: true,
             processing: true,
             "language": {
@@ -84,6 +95,10 @@
             ],
             ajax: {
                 url: "{{ route('admin.fault.index') }}",
+                data: function(d) {
+                    d.start_date = $('#start_date').val();
+                    d.end_date = $('#end_date').val();
+                }
             },
             columns: [{
                     name: "DT_RowIndex",
@@ -126,51 +141,17 @@
             ]
         });
 
-        $('#deleteForm').on('submit', function(e) {
-            e.preventDefault();
-            let url = $(this).attr('action');
-            $.ajax({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                url: url,
-                type: "POST",
-                data: new FormData(this),
-                contentType: false,
-                cache: false,
-                processData: false,
-                beforeSend: function() {
-                    console.log('ajax fired');
-                },
-                success: function(data) {
-                    if (data.status == true) {
-                        toastr['success'](data.message);
-                        window.location.href = data.url;
-                    } else {
-                        toastr['error'](data.message);
-                    }
-                },
-                error: function(xhr) {
-                    var i = 0;
-                    $('.help-block').remove();
-                    $('.has-error').removeClass('has-error');
-                    for (var error in xhr.responseJSON.errors) {
-                        $('#add_' + error).removeClass('has-error');
-                        $('#add_' + error).addClass('has-error');
-                        $('#error_' + error).html(
-                            '<span class="help-block ' + error + '">*' + xhr
-                            .responseJSON.errors[
-                                error] + '</span>');
-                        i++;
-                    }
-                }
-            });
+        // Apply the filter on button click
+        $('#filter').click(function() {
+            table.ajax.reload(); // Reload data with new filters
         });
 
-        $(document).on('click','.btnDelete',function(){
-            let url = $(this).data('url');
-            $('#deleteForm').attr('action',url);
-            $('#deleteModal').modal('show');
+        // Optionally, reset the filter
+        $('#reset').click(function() {
+            $('#start_date').val('');
+            $('#end_date').val('');
+            table.ajax.reload(); // Reload data without filters
         });
-    </script>
+    });
+</script>
 @endsection

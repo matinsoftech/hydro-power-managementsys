@@ -44,5 +44,9 @@
     aria-expanded="false">
     <i class="fa-solid fa-network-wired feather-icon"></i>
     <span class="hide-menu">Stations</span></a></li>
+<li class="sidebar-item"> <a class="sidebar-link sidebar-link" href="{{ route('admin.import_export') }}"
+    aria-expanded="false">
+    <i class="fa-solid fa-network-wired feather-icon"></i>
+    <span class="hide-menu">Import/Export</span></a></li>
 
 <li class="list-divider"></li>

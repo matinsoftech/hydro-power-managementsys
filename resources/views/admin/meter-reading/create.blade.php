@@ -1,18 +1,24 @@
 @extends('layouts.app')
 
 @section('title', 'Meter Reading Entry')
-
 @section('content')
 
-    <div class="container-fluid">
+    <style>
+        .table>:not(:last-child)>:last-child>*{
+            min-width: 150px;
+        }
+    </style>
+
+    <div class="container-fluid p-4">
+
         <!-- ============================================================== -->
         <!-- Start Page Content -->
         <!-- ============================================================== -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Meter Reading Entry ( {{ date('Y-m-d') }} )
+                    <div class="card-body" style="overflow: scroll">
+                        <h4 class="card-title d-flex align-items-center justify-content-between">Meter Reading Entry ( {{ date('Y-m-d') }} )
                             <a href="{{ route('admin.user.index') }}" class="btn btn-sm btn-primary float-right">Back</a>
                         </h4>
                         <div class="card card-primary">
