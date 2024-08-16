@@ -8,6 +8,11 @@
         min-width: 150px;
     }
 </style>
+<style>
+    .table>:not(:last-child)>:last-child>*{
+        min-width: 150px;
+    }
+</style>
 
     <div class="container-fluid">
         <!-- ============================================================== -->
@@ -85,7 +90,37 @@
 @endsection
 
 @section('scripts')
-    <script>
+<script>
+    function calculatePercentage(index) {
+        var mainMeterInput = document.querySelector('input[name="main_meter[' + index + ']"]');
+        var showMeterInput = document.querySelector('input[name="show_meter[' + index + ']"]');
+        var differenceInput = document.querySelector('input[name="difference[' + index + ']"]');
+        var percentageInput = document.querySelector('input[name="percentage[' + index + ']"]');
+
+        var mainMeter = parseFloat(mainMeterInput.value) || 0;
+        var showMeter = parseFloat(showMeterInput.value) || 0;
+
+        var difference = showMeter - mainMeter;
+        var percentage = 0;
+        if (mainMeter !== 0) {  // Ensure mainMeter is not zero to avoid division by zero
+            percentage = (difference * 100) / mainMeter;
+        }
+
+        differenceInput.value = difference.toFixed(2); // Format to 2 decimal places
+        percentageInput.value = percentage.toFixed(1) + '%'; // Format to 1 decimal place and add percentage sign
+
+        console.log('Index:', index, 'Main Meter:', mainMeter, 'Show Meter:', showMeter, 'Difference:', difference, 'Percentage:', percentage);
+    }
+
+    function calculateAllPercentages() {
+        for (var i = 0; i <= 23; i++) {
+            calculatePercentage(i);
+        }
+    }
+
+    $(document).ready(function() {
+        calculateAllPercentages(); // Calculate percentages when the page loads
+
         $('#addData').on('submit', function(e) {
             e.preventDefault();
             let url = $(this).attr('action');
@@ -100,7 +135,7 @@
                 cache: false,
                 processData: false,
                 beforeSend: function() {
-                    console.log('ajax fired');
+                    // Optionally add some feedback here
                 },
                 success: function(data) {
                     if (data.status == true) {
@@ -126,5 +161,6 @@
                 }
             });
         });
-    </script>
+    });
+</script>
 @endsection

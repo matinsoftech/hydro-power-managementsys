@@ -51,4 +51,5 @@ class ExcelData extends Model
         'CheckMeterUnitIn1hr_kWH',
         'Remark',
     ];
+
 }
