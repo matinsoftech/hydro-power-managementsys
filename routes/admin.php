@@ -33,3 +33,7 @@ Route::post('sub-station',[StationController::class,'getSubStation'])->name('sta
 
 Route::resource('meter-reading', MeterReadingController::class);
 Route::get('meter-reading-detail', [MeterReadingController::class, 'detail'])->name('meter-reading.detail');
+
+Route::get('import-file', [ImprtExportController::class, 'import_file'])->name('import_file');
+Route::get('import-export', [ImprtExportController::class, 'import_export'])->name('import_export');
+Route::get('export-file', [ImprtExportController::class, 'export_file'])->name('export_file');
