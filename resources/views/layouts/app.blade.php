@@ -99,6 +99,44 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
         integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+    (function () {
+        var KEY = 'hp_sidebar_collapsed';
+        var wrapper = document.getElementById('main-wrapper');
+        var btn = document.getElementById('sidebarCollapseBtn');
+        if (!wrapper || !btn) return;
+
+        function apply(collapsed) {
+            wrapper.classList.toggle('sidebar-collapsed', collapsed);
+            btn.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e) {}
+        }
+
+        var desktopMq = window.matchMedia('(min-width: 1170px)');
+
+        // Restore preference on desktop
+        try {
+            if (desktopMq.matches && localStorage.getItem(KEY) === '1') {
+                apply(true);
+            }
+        } catch (e) {}
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (!desktopMq.matches) return;
+            apply(!wrapper.classList.contains('sidebar-collapsed'));
+        });
+
+        window.addEventListener('resize', function () {
+            if (!desktopMq.matches) {
+                wrapper.classList.remove('sidebar-collapsed');
+            } else if (localStorage.getItem(KEY) === '1') {
+                wrapper.classList.add('sidebar-collapsed');
+            }
+        });
+    })();
+    </script>
     <!--This page JavaScript -->
     @yield('scripts')
 

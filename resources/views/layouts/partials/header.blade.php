@@ -1,21 +1,20 @@
 <header class="topbar" data-navbarbg="skin6">
     <nav class="navbar top-navbar navbar-expand-lg">
         <div class="navbar-header" data-logobg="skin6">
-            <!-- This is for the sidebar toggle which is visible on mobile only -->
-            <a class="nav-toggler waves-effect waves-light d-block d-lg-none" href="javascript:void(0)"><i
+            <!-- Mobile: open/close off-canvas sidebar -->
+            <a class="nav-toggler waves-effect waves-light d-block d-lg-none" href="javascript:void(0)" aria-label="Open menu"><i
                     class="ti-menu ti-close"></i></a>
-            <!-- ============================================================== -->
-            <!-- Logo -->
-            <!-- ============================================================== -->
+            <!-- Desktop: collapse/expand sidebar (≥1170px) -->
+            <a class="sidebartoggler waves-effect waves-light" href="javascript:void(0)"
+                id="sidebarCollapseBtn" title="Collapse sidebar" aria-label="Collapse sidebar">
+                <i class="fa-solid fa-bars"></i>
+            </a>
             <div class="navbar-brand">
-                <a href="{{ route('dashboard') }}" class="app-brand-text">HydroPower</a>
+                <a href="{{ route('dashboard') }}" class="app-brand-text">
+                    <span class="brand-full">HydroPower</span>
+                    <span class="brand-mini">HP</span>
+                </a>
             </div>
-            <!-- ============================================================== -->
-            <!-- End Logo -->
-            <!-- ============================================================== -->
-            <!-- ============================================================== -->
-            <!-- Toggle which is visible on mobile only -->
-            <!-- ============================================================== -->
             <a class="topbartoggler d-block d-lg-none waves-effect waves-light" href="javascript:void(0)"
                 data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i

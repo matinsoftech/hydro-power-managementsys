@@ -98,6 +98,163 @@
     padding: 0.25rem 0;
 }
 
+.app-brand-text .brand-mini{
+    display: none;
+}
+
+.sidebartoggler{
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #4F5467;
+    padding: 0 12px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.sidebartoggler:hover,
+.sidebartoggler:focus{
+    color: #0e9fa8;
+}
+
+/* ============================================================
+   Collapsible sidebar (desktop ≥1170px — theme breakpoint)
+   ============================================================ */
+@media (min-width: 1170px) {
+    .sidebartoggler{
+        display: inline-flex;
+    }
+
+    #main-wrapper.sidebar-collapsed .left-sidebar{
+        width: 70px;
+    }
+
+    #main-wrapper.sidebar-collapsed[data-layout="vertical"][data-sidebartype="full"] .page-wrapper,
+    #main-wrapper.sidebar-collapsed[data-layout="vertical"] .page-wrapper{
+        margin-left: 70px;
+    }
+
+    #main-wrapper.sidebar-collapsed[data-layout="vertical"] .topbar .top-navbar .navbar-header{
+        width: 70px;
+    }
+
+    #main-wrapper.sidebar-collapsed[data-layout="vertical"][data-sidebar-position="fixed"] .topbar .top-navbar .navbar-collapse{
+        margin-left: 70px;
+    }
+
+    #main-wrapper.sidebar-collapsed .app-brand-text .brand-full{
+        display: none;
+    }
+
+    #main-wrapper.sidebar-collapsed .app-brand-text .brand-mini{
+        display: inline;
+    }
+
+    #main-wrapper.sidebar-collapsed .navbar-header{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    #main-wrapper.sidebar-collapsed .navbar-brand{
+        display: none;
+    }
+
+    #main-wrapper.sidebar-collapsed .sidebartoggler{
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    #main-wrapper.sidebar-collapsed .sidebar-nav .hide-menu,
+    #main-wrapper.sidebar-collapsed .sidebar-nav .has-arrow::after{
+        display: none !important;
+    }
+
+    #main-wrapper.sidebar-collapsed .sidebar-nav .nav-small-cap{
+        font-size: 0;
+        padding: 8px 0;
+        justify-content: center;
+        text-align: center;
+    }
+
+    #main-wrapper.sidebar-collapsed .sidebar-nav .nav-small-cap .hide-menu{
+        display: none !important;
+    }
+
+    #main-wrapper.sidebar-collapsed .sidebar-nav ul .sidebar-item .sidebar-link{
+        padding: 12px 0;
+        margin-right: 0;
+        justify-content: center;
+        text-align: center;
+    }
+
+    #main-wrapper.sidebar-collapsed .sidebar-nav ul .sidebar-item .sidebar-link .feather-icon,
+    #main-wrapper.sidebar-collapsed .sidebar-nav ul .sidebar-item .sidebar-link i{
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    #main-wrapper.sidebar-collapsed .sidebar-nav ul .list-divider{
+        margin: 8px 12px;
+    }
+
+    #main-wrapper.sidebar-collapsed .sidebar-nav ul .first-level{
+        display: none !important;
+    }
+
+    /* Expand labels on hover while collapsed */
+    #main-wrapper.sidebar-collapsed .left-sidebar:hover{
+        width: 260px;
+        z-index: 50;
+        box-shadow: 0 8px 24px rgba(29, 33, 64, 0.12);
+    }
+
+    #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav .hide-menu,
+    #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav .has-arrow::after{
+        display: inline-block !important;
+    }
+
+    #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav .nav-small-cap{
+        font-size: inherit;
+        justify-content: flex-start;
+        text-align: left;
+        padding-left: 20px;
+    }
+
+    #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav ul .sidebar-item .sidebar-link{
+        padding: 12px 15px;
+        margin-right: 17px;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav ul .sidebar-item .sidebar-link .feather-icon,
+    #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav ul .sidebar-item .sidebar-link i{
+        margin-right: 8px !important;
+    }
+
+    #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav ul .first-level{
+        display: block !important;
+    }
+}
+
+@media (max-width: 1169.98px) {
+    .sidebartoggler{
+        display: none !important;
+    }
+
+    #main-wrapper.sidebar-collapsed .left-sidebar,
+    #main-wrapper.sidebar-collapsed .page-wrapper,
+    #main-wrapper.sidebar-collapsed .topbar .top-navbar .navbar-header,
+    #main-wrapper.sidebar-collapsed .topbar .top-navbar .navbar-collapse{
+        width: auto;
+        margin-left: 0;
+    }
+}
+
 .p-10{
     padding: 10px 10px;
 }
