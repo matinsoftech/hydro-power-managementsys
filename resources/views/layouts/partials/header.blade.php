@@ -8,10 +8,7 @@
             <!-- Logo -->
             <!-- ============================================================== -->
             <div class="navbar-brand">
-                <!-- Logo icon -->
-                <a href="index.html">
-                    <img src="{{ asset(app('siteSetting')->logo) }}" alt="" class="img-fluid">
-                </a>
+                <a href="{{ route('dashboard') }}" class="app-brand-text">HydroPower</a>
             </div>
             <!-- ============================================================== -->
             <!-- End Logo -->

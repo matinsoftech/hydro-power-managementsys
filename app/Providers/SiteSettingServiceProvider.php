@@ -21,7 +21,12 @@ class SiteSettingServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $siteSetting = SiteSetting::first();
+        try {
+            $siteSetting = SiteSetting::first();
+        } catch (\Throwable $e) {
+            $siteSetting = null;
+        }
+
         App::singleton('siteSetting', function () use ($siteSetting) {
             return $siteSetting;
         });

@@ -20,7 +20,12 @@ class MailServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $mailConfig = MailConfig::first();
+        try {
+            $mailConfig = MailConfig::first();
+        } catch (\Throwable $e) {
+            $mailConfig = null;
+        }
+
         if($mailConfig){
 
             config(['mail.driver' => $mailConfig->driver]);
