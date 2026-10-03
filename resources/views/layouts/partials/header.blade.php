@@ -1,18 +1,12 @@
 <header class="topbar" data-navbarbg="skin6">
     <nav class="navbar top-navbar navbar-expand-lg">
         <div class="navbar-header" data-logobg="skin6">
-            <!-- Mobile: open/close off-canvas sidebar -->
             <a class="nav-toggler waves-effect waves-light d-block d-lg-none" href="javascript:void(0)" aria-label="Open menu"><i
                     class="ti-menu ti-close"></i></a>
-            <!-- Desktop: collapse/expand sidebar (≥1170px) -->
-            <a class="sidebartoggler waves-effect waves-light" href="javascript:void(0)"
-                id="sidebarCollapseBtn" title="Collapse sidebar" aria-label="Collapse sidebar">
-                <i class="fa-solid fa-bars"></i>
-            </a>
             <div class="navbar-brand">
                 <a href="{{ route('dashboard') }}" class="app-brand-text">
                     <span class="brand-full">HydroPower</span>
-                    <span class="brand-mini">HP</span>
+                    <span class="brand-mini" style="display:none">HP</span>
                 </a>
             </div>
             <a class="topbartoggler d-block d-lg-none waves-effect waves-light" href="javascript:void(0)"
@@ -20,14 +14,14 @@
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><i
                     class="ti-more"></i></a>
         </div>
-        <!-- ============================================================== -->
-        <!-- End Logo -->
-        <!-- ============================================================== -->
         <div class="navbar-collapse collapse" id="navbarSupportedContent">
-            <!-- ============================================================== -->
-            <!-- toggle and nav items -->
-            <!-- ============================================================== -->
             <ul class="navbar-nav float-left me-auto ms-3 ps-1">
+                <li class="nav-item d-none d-lg-flex align-items-center">
+                    <a class="nav-link sidebartoggler" href="javascript:void(0)" id="sidebarCollapseBtn"
+                        title="Collapse sidebar" aria-label="Collapse sidebar">
+                        <i class="ti-menu"></i>
+                    </a>
+                </li>
                 <!-- Notification -->
                 {{-- <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle pl-md-3 position-relative" href="javascript:void(0)"

@@ -29,7 +29,40 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     {{-- Custom CSS --}}
-    <link href="{{ asset('custom/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('custom/app.css') }}?v={{ @filemtime(public_path('custom/app.css')) ?: time() }}" rel="stylesheet">
+    <style id="sidebar-collapse-critical">
+        .app-brand-text .brand-mini { display: none !important; }
+        .sidebartoggler { cursor: pointer; color: #4F5467; font-size: 1.25rem; padding: 0 .75rem; }
+        .sidebartoggler:hover { color: #0e9fa8; }
+        @media (min-width: 992px) {
+            #main-wrapper.sidebar-collapsed .left-sidebar { width: 70px !important; }
+            #main-wrapper.sidebar-collapsed .page-wrapper { margin-left: 70px !important; }
+            #main-wrapper.sidebar-collapsed[data-sidebar-position="fixed"] .topbar .top-navbar .navbar-collapse { margin-left: 70px !important; }
+            #main-wrapper.sidebar-collapsed[data-layout="vertical"] .topbar .top-navbar .navbar-header { width: 70px !important; }
+            #main-wrapper.sidebar-collapsed .app-brand-text .brand-full { display: none !important; }
+            #main-wrapper.sidebar-collapsed .app-brand-text .brand-mini { display: inline !important; }
+            #main-wrapper.sidebar-collapsed .sidebar-nav .hide-menu,
+            #main-wrapper.sidebar-collapsed .sidebar-nav .has-arrow::after { display: none !important; }
+            #main-wrapper.sidebar-collapsed .sidebar-nav .nav-small-cap { font-size: 0 !important; justify-content: center; }
+            #main-wrapper.sidebar-collapsed .sidebar-nav ul .sidebar-item .sidebar-link {
+                padding: 12px 0 !important; margin-right: 0 !important; justify-content: center !important;
+            }
+            #main-wrapper.sidebar-collapsed .sidebar-nav ul .sidebar-item .sidebar-link .feather-icon,
+            #main-wrapper.sidebar-collapsed .sidebar-nav ul .sidebar-item .sidebar-link i {
+                margin-right: 0 !important; margin-left: 0 !important;
+            }
+            #main-wrapper.sidebar-collapsed .sidebar-nav ul .first-level { display: none !important; }
+            #main-wrapper.sidebar-collapsed .left-sidebar:hover { width: 260px !important; z-index: 50; }
+            #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav .hide-menu { display: inline-block !important; }
+            #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav .nav-small-cap { font-size: .75rem !important; justify-content: flex-start; padding-left: 20px; }
+            #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav ul .sidebar-item .sidebar-link {
+                padding: 12px 15px !important; margin-right: 17px !important; justify-content: flex-start !important;
+            }
+            #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav ul .sidebar-item .sidebar-link .feather-icon,
+            #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav ul .sidebar-item .sidebar-link i { margin-right: 8px !important; }
+            #main-wrapper.sidebar-collapsed .left-sidebar:hover .sidebar-nav ul .first-level { display: block !important; }
+        }
+    </style>
     @yield('styles')
 </head>
 
@@ -106,30 +139,36 @@
         var btn = document.getElementById('sidebarCollapseBtn');
         if (!wrapper || !btn) return;
 
+        function isDesktop() {
+            return window.innerWidth >= 992;
+        }
+
         function apply(collapsed) {
-            wrapper.classList.toggle('sidebar-collapsed', collapsed);
+            if (collapsed) {
+                wrapper.classList.add('sidebar-collapsed');
+            } else {
+                wrapper.classList.remove('sidebar-collapsed');
+            }
             btn.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
             btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
             try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e) {}
         }
 
-        var desktopMq = window.matchMedia('(min-width: 1170px)');
-
-        // Restore preference on desktop
         try {
-            if (desktopMq.matches && localStorage.getItem(KEY) === '1') {
+            if (isDesktop() && localStorage.getItem(KEY) === '1') {
                 apply(true);
             }
         } catch (e) {}
 
         btn.addEventListener('click', function (e) {
             e.preventDefault();
-            if (!desktopMq.matches) return;
+            e.stopPropagation();
+            if (!isDesktop()) return;
             apply(!wrapper.classList.contains('sidebar-collapsed'));
         });
 
         window.addEventListener('resize', function () {
-            if (!desktopMq.matches) {
+            if (!isDesktop()) {
                 wrapper.classList.remove('sidebar-collapsed');
             } else if (localStorage.getItem(KEY) === '1') {
                 wrapper.classList.add('sidebar-collapsed');
