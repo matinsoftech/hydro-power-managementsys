@@ -6,17 +6,21 @@
         Home
     </a>
     @if(auth()->user()->user_type == 'Admin')
-        <a href="{{ route('admin.import_export') }}" data-route="import">
-            <i class="fa-solid fa-file-import"></i>
-            Import
-        </a>
         <a href="{{ route('admin.reports.fault') }}" data-route="fault">
             <i class="fa-solid fa-triangle-exclamation"></i>
-            Faults
+            Fault
         </a>
         <a href="{{ route('admin.reports.generation') }}" data-route="generation">
             <i class="fa-solid fa-chart-column"></i>
             Gen.
+        </a>
+        <a href="{{ route('admin.reports.generator') }}" data-route="generator">
+            <i class="fa-solid fa-gears"></i>
+            Meter
+        </a>
+        <a href="{{ route('admin.reports.log') }}" data-route="log">
+            <i class="fa-solid fa-book"></i>
+            Log
         </a>
     @else
         <a href="{{ route('user.fault.index') }}" data-route="fault">
@@ -58,9 +62,10 @@
             var key = a.getAttribute('data-route');
             var on = false;
             if (key === 'dashboard' && /\/dashboard\/?$/.test(path)) on = true;
-            if (key === 'import' && /import-export|import_|export_/.test(path)) on = true;
             if (key === 'fault' && (/reports\/fault/.test(path) || /\/fault(\/|$)/.test(path))) on = true;
             if (key === 'generation' && /reports\/generation/.test(path)) on = true;
+            if (key === 'generator' && /reports\/generator/.test(path)) on = true;
+            if (key === 'log' && /reports\/log/.test(path)) on = true;
             if (key === 'grid' && /\/grid(\/|$)/.test(path)) on = true;
             if (key === 'meter' && /meter-reading/.test(path)) on = true;
             if (on) a.classList.add('on');

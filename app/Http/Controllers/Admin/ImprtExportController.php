@@ -2,15 +2,27 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\GeneratorLogImportException;
 use App\Exceptions\GridFailureImportException;
 use App\Exceptions\GenerationImportException;
+use App\Exceptions\PlantLogImportException;
 use App\Http\Controllers\Controller;
 use App\Models\ExcelData;
 use App\Models\GenerationReading;
+use App\Models\GeneratorDailyLog;
+use App\Models\GeneratorOutage;
 use App\Models\GridFailure;
 use App\Models\ImportBatch;
+use App\Models\LogDay;
+use App\Models\LogLineHour;
+use App\Models\LogMeterHour;
+use App\Models\LogUnitDay;
+use App\Models\LogUnitHour;
+use App\Models\LogUnitOutage;
 use App\Services\GenerationImportService;
+use App\Services\GeneratorLogImportService;
 use App\Services\GridFailureImportService;
+use App\Services\PlantLogImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -73,12 +85,55 @@ class ImprtExportController extends Controller
             ->paginate(10, ['*'], 'gen_import_page')
             ->withQueryString();
 
+        $generatorQuery = GeneratorDailyLog::query()
+            ->withCount('outages')
+            ->orderBy('date')
+            ->orderBy('generator');
+
+        if ($request->filled('generator_unit')) {
+            $generatorQuery->where('generator', (int) $request->input('generator_unit'));
+        }
+        if ($request->filled('generator_start')) {
+            $generatorQuery->where('date', '>=', $request->input('generator_start'));
+        }
+        if ($request->filled('generator_end')) {
+            $generatorQuery->where('date', '<=', $request->input('generator_end'));
+        }
+
+        $generatorRows = $generatorQuery->paginate(20, ['*'], 'generator_page')->withQueryString();
+
+        $generatorImports = ImportBatch::query()
+            ->where('type', ImportBatch::TYPE_GENERATOR)
+            ->with('importer')
+            ->latest('imported_at')
+            ->paginate(10, ['*'], 'generator_import_page')
+            ->withQueryString();
+
+        $logQuery = LogDay::query()->with(['unitDays'])->orderBy('date');
+        if ($request->filled('log_start')) {
+            $logQuery->where('date', '>=', $request->input('log_start'));
+        }
+        if ($request->filled('log_end')) {
+            $logQuery->where('date', '<=', $request->input('log_end'));
+        }
+        $logRows = $logQuery->paginate(20, ['*'], 'log_page')->withQueryString();
+        $logImports = ImportBatch::query()
+            ->where('type', ImportBatch::TYPE_LOG)
+            ->with('importer')
+            ->latest('imported_at')
+            ->paginate(10, ['*'], 'log_import_page')
+            ->withQueryString();
+
         return view('admin.import_export', compact(
             'failureRows',
             'failureImports',
             'generationRows',
             'generationImports',
-            'generationTotals'
+            'generationTotals',
+            'generatorRows',
+            'generatorImports',
+            'logRows',
+            'logImports'
         ));
     }
 
@@ -294,9 +349,14 @@ class ImprtExportController extends Controller
 
     public function undoFailureImport(ImportBatch $importBatch)
     {
-        $tab = $importBatch->type === ImportBatch::TYPE_GENERATION ? 'generation' : 'failure';
+        $tab = match ($importBatch->type) {
+            ImportBatch::TYPE_GENERATION => 'generation',
+            ImportBatch::TYPE_GENERATOR => 'generator',
+            ImportBatch::TYPE_LOG => 'log',
+            default => 'failure',
+        };
 
-        if (!in_array($importBatch->type, [ImportBatch::TYPE_FAILURE, ImportBatch::TYPE_GENERATION], true)) {
+        if (!in_array($importBatch->type, [ImportBatch::TYPE_FAILURE, ImportBatch::TYPE_GENERATION, ImportBatch::TYPE_GENERATOR, ImportBatch::TYPE_LOG], true)) {
             return redirect()
                 ->route('admin.import_export', ['tab' => $tab])
                 ->with('error', 'Invalid import batch.');
@@ -314,6 +374,16 @@ class ImprtExportController extends Controller
         DB::transaction(function () use ($importBatch) {
             if ($importBatch->type === ImportBatch::TYPE_FAILURE) {
                 GridFailure::where('import_batch_id', $importBatch->id)->delete();
+            } elseif ($importBatch->type === ImportBatch::TYPE_GENERATOR) {
+                GeneratorOutage::where('import_batch_id', $importBatch->id)->delete();
+                GeneratorDailyLog::where('import_batch_id', $importBatch->id)->delete();
+            } elseif ($importBatch->type === ImportBatch::TYPE_LOG) {
+                LogUnitOutage::where('import_batch_id', $importBatch->id)->delete();
+                LogUnitHour::where('import_batch_id', $importBatch->id)->delete();
+                LogLineHour::where('import_batch_id', $importBatch->id)->delete();
+                LogMeterHour::where('import_batch_id', $importBatch->id)->delete();
+                LogUnitDay::where('import_batch_id', $importBatch->id)->delete();
+                LogDay::where('import_batch_id', $importBatch->id)->delete();
             } else {
                 GenerationReading::where('import_batch_id', $importBatch->id)->delete();
             }
@@ -331,11 +401,16 @@ class ImprtExportController extends Controller
 
     public function downloadFailureImport(ImportBatch $importBatch)
     {
-        if (!in_array($importBatch->type, [ImportBatch::TYPE_FAILURE, ImportBatch::TYPE_GENERATION], true)) {
+        if (!in_array($importBatch->type, [ImportBatch::TYPE_FAILURE, ImportBatch::TYPE_GENERATION, ImportBatch::TYPE_GENERATOR, ImportBatch::TYPE_LOG], true)) {
             abort(404);
         }
 
-        $tab = $importBatch->type === ImportBatch::TYPE_GENERATION ? 'generation' : 'failure';
+        $tab = match ($importBatch->type) {
+            ImportBatch::TYPE_GENERATION => 'generation',
+            ImportBatch::TYPE_GENERATOR => 'generator',
+            ImportBatch::TYPE_LOG => 'log',
+            default => 'failure',
+        };
 
         if (!$importBatch->stored_path || !Storage::disk('local')->exists($importBatch->stored_path)) {
             return redirect()
@@ -772,6 +847,635 @@ class ImprtExportController extends Controller
         return redirect()
             ->route('admin.import_export', ['tab' => 'generation'])
             ->with('success', 'Generation reading deleted.');
+    }
+
+    public function importGeneratorLog(Request $request, GeneratorLogImportService $importer)
+    {
+        $wantsJson = $request->ajax() || $request->wantsJson() || $request->expectsJson();
+
+        try {
+            $request->validate([
+                'import_file' => ['required', 'file', 'max:20480', 'mimes:xlsx,xls'],
+            ], [
+                'import_file.required' => 'Please choose a Generator Meter Import Excel file to upload.',
+                'import_file.max' => 'File is too large. Maximum size is 20 MB.',
+                'import_file.mimes' => 'Only .xlsx or .xls files are allowed.',
+            ]);
+        } catch (ValidationException $e) {
+            if ($wantsJson) {
+                return response()->json([
+                    'success' => false,
+                    'title' => 'Invalid File',
+                    'message' => 'Please upload a valid Excel file (.xlsx or .xls).',
+                    'details' => collect($e->errors())->flatten()->values()->all(),
+                ], 422);
+            }
+
+            return redirect()
+                ->route('admin.import_export', ['tab' => 'generator'])
+                ->withErrors($e->errors())
+                ->with('error', 'File validation failed.');
+        }
+
+        $file = $request->file('import_file');
+        $originalName = $file->getClientOriginalName();
+        $storedPath = null;
+        $startedAt = microtime(true);
+
+        try {
+            $parsed = $importer->parse($file->getRealPath(), $originalName);
+
+            $storedPath = $file->storeAs(
+                'imports/generator-logs/' . now()->format('Y/m'),
+                now()->format('Ymd_His') . '_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $originalName),
+                'local'
+            );
+
+            $existingDays = GeneratorDailyLog::query()
+                ->get(['generator', 'date', 'total_running', 'total_outage', 'initial_reading', 'final_reading', 'total_generation_kwh'])
+                ->mapWithKeys(fn (GeneratorDailyLog $row) => [$row->fingerprint() => $row->id])
+                ->all();
+
+            $existingEvents = GeneratorOutage::query()
+                ->get(['generator', 'date', 'serial', 'trip_to', 'resume_hrs', 'synch_hrs', 'outage_hrs', 'reason'])
+                ->map(fn (GeneratorOutage $row) => GeneratorOutage::fingerprintFromArray($row->toArray()))
+                ->flip()
+                ->all();
+
+            $newDays = [];
+            $duplicateDays = 0;
+            foreach ($parsed['days'] as $day) {
+                $key = GeneratorDailyLog::fingerprintFromArray($day);
+                if (isset($existingDays[$key])) {
+                    $duplicateDays++;
+                    continue;
+                }
+                $existingDays[$key] = true;
+                $newDays[] = $day;
+            }
+
+            $newEvents = [];
+            $duplicateEvents = 0;
+            foreach ($parsed['events'] as $event) {
+                $key = GeneratorOutage::fingerprintFromArray($event);
+                if (isset($existingEvents[$key])) {
+                    $duplicateEvents++;
+                    continue;
+                }
+                $existingEvents[$key] = true;
+                $newEvents[] = $event;
+            }
+
+            $insertedCount = count($newDays) + count($newEvents);
+            $duplicateCount = $duplicateDays + $duplicateEvents;
+            $skipped = (int) ($parsed['skipped'] ?? 0);
+            $elapsedSeconds = round(microtime(true) - $startedAt, 1);
+
+            if ($insertedCount === 0) {
+                if ($storedPath) {
+                    Storage::disk('local')->delete($storedPath);
+                }
+
+                $payload = [
+                    'success' => false,
+                    'title' => 'Nothing New to Import',
+                    'message' => 'No new Generator Meter Import records were saved.',
+                    'details' => array_values(array_filter([
+                        $duplicateCount > 0 ? "{$duplicateCount} row(s) were already in the database." : null,
+                        $skipped > 0 ? "{$skipped} sheet(s) had no generator block and were skipped." : null,
+                        "Time taken: {$elapsedSeconds} second(s).",
+                    ])),
+                ];
+
+                return $wantsJson
+                    ? response()->json($payload, 422)
+                    : redirect()->route('admin.import_export', ['tab' => 'generator'])->with('error', $payload['message']);
+            }
+
+            DB::transaction(function () use ($parsed, $originalName, $storedPath, $newDays, $newEvents, $insertedCount, $skipped, $duplicateCount) {
+                $batch = ImportBatch::create([
+                    'type' => ImportBatch::TYPE_GENERATOR,
+                    'original_filename' => $originalName,
+                    'stored_path' => $storedPath,
+                    'record_count' => $insertedCount,
+                    'skipped_count' => $skipped,
+                    'duplicate_count' => $duplicateCount,
+                    'imported_by' => Auth::id(),
+                    'imported_at' => now(),
+                    'notes' => $parsed['month_label'] ?? null,
+                ]);
+
+                $dayIds = GeneratorDailyLog::query()
+                    ->get(['id', 'generator', 'date'])
+                    ->mapWithKeys(fn (GeneratorDailyLog $row) => [$row->generator . '|' . $row->date => $row->id])
+                    ->all();
+
+                foreach ($newDays as $day) {
+                    $day['import_batch_id'] = $batch->id;
+                    $created = GeneratorDailyLog::create($day);
+                    $dayIds[$created->generator . '|' . $created->date] = $created->id;
+                }
+
+                foreach ($newEvents as $event) {
+                    $event['import_batch_id'] = $batch->id;
+                    $event['generator_daily_log_id'] = $dayIds[$event['generator'] . '|' . $event['date']] ?? null;
+                    GeneratorOutage::create($event);
+                }
+            });
+
+            $details = [
+                count($newDays) . ' daily total row(s) and ' . count($newEvents) . ' outage row(s) were saved by Generator Meter Import from "' . $originalName . '".',
+            ];
+            if ($duplicateCount > 0) {
+                $details[] = "{$duplicateCount} duplicate row(s) were skipped.";
+            }
+            if ($skipped > 0) {
+                $details[] = "{$skipped} sheet(s) without a generator block were skipped.";
+            }
+            foreach (array_slice($parsed['warnings'] ?? [], 0, 8) as $warning) {
+                $details[] = $warning;
+            }
+            $details[] = "Time taken: {$elapsedSeconds} second(s).";
+
+            $payload = [
+                'success' => true,
+                'title' => 'Import Successful',
+                'message' => count($newDays) . ' generator meter day(s) imported.',
+                'details' => $details,
+                'redirect' => route('admin.import_export', ['tab' => 'generator']),
+            ];
+
+            return $wantsJson
+                ? response()->json($payload)
+                : redirect()
+                    ->route('admin.import_export', ['tab' => 'generator'])
+                    ->with('import_result', $payload);
+        } catch (GeneratorLogImportException $e) {
+            if ($storedPath) {
+                Storage::disk('local')->delete($storedPath);
+            }
+
+            $payload = [
+                'success' => false,
+                'title' => 'Import Failed',
+                'message' => $e->getMessage(),
+                'details' => array_values(array_filter($e->details())),
+            ];
+
+            return $wantsJson
+                ? response()->json($payload, 422)
+                : redirect()
+                    ->route('admin.import_export', ['tab' => 'generator'])
+                    ->with('error', $e->getMessage())
+                    ->with('import_errors', $payload['details']);
+        } catch (Throwable $e) {
+            report($e);
+            if ($storedPath) {
+                Storage::disk('local')->delete($storedPath);
+            }
+
+            $payload = [
+                'success' => false,
+                'title' => 'Import Failed',
+                'message' => 'Something went wrong while importing. No records were saved.',
+                'details' => array_values(array_filter([
+                    config('app.debug') ? $e->getMessage() : 'Please try again with a Generator Meter Import Excel file.',
+                ])),
+            ];
+
+            return $wantsJson
+                ? response()->json($payload, 500)
+                : redirect()
+                    ->route('admin.import_export', ['tab' => 'generator'])
+                    ->with('error', $payload['message']);
+        }
+    }
+
+    public function downloadGeneratorLogTemplate(): StreamedResponse
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('2083-05-01');
+
+        $sheet->setCellValue('A1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT');
+        $sheet->setCellValue('A2', 'DATE:01/05/2083');
+
+        $this->writeGeneratorLogBlock($sheet, 1, 4, [
+            'to' => '21:12:00',
+            'resume' => '21:16:00',
+            'synch' => '21:27:00',
+            'outage' => '0:15:00',
+            'reason' => 'Machine trip due to NEA grid gone',
+            'running' => '23:45:00',
+            'total_outage' => '0:15:00',
+            'initial' => 1000,
+            'final' => 12450,
+        ]);
+        $this->writeGeneratorLogBlock($sheet, 17, 4, [
+            'to' => '21:12:00',
+            'resume' => '21:16:00',
+            'synch' => '21:22:00',
+            'outage' => '0:10:00',
+            'reason' => 'Machine trip due to NEA grid gone',
+            'running' => '23:50:00',
+            'total_outage' => '0:10:00',
+            'initial' => 2000,
+            'final' => 11880,
+        ]);
+
+        foreach ([1, 2, 3, 4, 5, 6, 8, 10, 12, 17, 18, 19, 20, 21, 22, 24, 26, 28] as $col) {
+            $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
+        }
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, 'generator-meter-template.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * @param  array{to: string, resume: string, synch: string, outage: string, reason: string, running: string, total_outage: string, initial: float|int, final: float|int}  $sample
+     */
+    private function writeGeneratorLogBlock($sheet, int $startCol, int $titleRow, array $sample): void
+    {
+        $generator = $startCol === 1 ? 1 : 2;
+        $sheet->setCellValue([$startCol, $titleRow], 'GENERATOR-' . $generator);
+        $headers = ['S.NO.', 'TO', 'RESUME', 'SYNCH', 'TOTAL OUTAGE', 'REASON'];
+        foreach ($headers as $i => $header) {
+            $sheet->setCellValue([$startCol + $i, $titleRow + 1], $header);
+        }
+
+        $sheet->setCellValue([$startCol, $titleRow + 2], 1);
+        $sheet->setCellValue([$startCol + 1, $titleRow + 2], $sample['to']);
+        $sheet->setCellValue([$startCol + 2, $titleRow + 2], $sample['resume']);
+        $sheet->setCellValue([$startCol + 3, $titleRow + 2], $sample['synch']);
+        $sheet->setCellValue([$startCol + 4, $titleRow + 2], $sample['outage']);
+        $sheet->setCellValue([$startCol + 5, $titleRow + 2], $sample['reason']);
+
+        for ($serial = 2; $serial <= 6; $serial++) {
+            $sheet->setCellValue([$startCol, $titleRow + 1 + $serial], $serial);
+            $sheet->setCellValue([$startCol + 4, $titleRow + 1 + $serial], '0:00:00');
+        }
+
+        $labelRow = $titleRow + 9;
+        $valueRow = $labelRow + 1;
+        $sheet->setCellValue([$startCol, $labelRow], 'TOTAL RUNNING (HRS)');
+        $sheet->setCellValue([$startCol + 2, $labelRow], 'TOTAL OUTAGE (HRS)');
+        $sheet->setCellValue([$startCol + 7, $labelRow], 'INITIAL READING');
+        $sheet->setCellValue([$startCol + 9, $labelRow], 'FINAL READING');
+        $sheet->setCellValue([$startCol + 11, $labelRow], 'TOTAL GENERATION (KWH)');
+        $sheet->setCellValue([$startCol, $valueRow], $sample['running']);
+        $sheet->setCellValue([$startCol + 2, $valueRow], $sample['total_outage']);
+        $sheet->setCellValue([$startCol + 7, $valueRow], $sample['initial']);
+        $sheet->setCellValue([$startCol + 9, $valueRow], $sample['final']);
+        $sheet->setCellValue([$startCol + 11, $valueRow], $sample['final'] - $sample['initial']);
+    }
+
+    public function exportGeneratorLog(Request $request): StreamedResponse
+    {
+        $days = GeneratorDailyLog::query()->orderBy('date')->orderBy('generator');
+        $events = GeneratorOutage::query()->orderBy('date')->orderBy('generator')->orderBy('serial');
+
+        if ($request->filled('generator_unit')) {
+            $days->where('generator', (int) $request->input('generator_unit'));
+            $events->where('generator', (int) $request->input('generator_unit'));
+        }
+        if ($request->filled('generator_start')) {
+            $days->where('date', '>=', $request->input('generator_start'));
+            $events->where('date', '>=', $request->input('generator_start'));
+        }
+        if ($request->filled('generator_end')) {
+            $days->where('date', '<=', $request->input('generator_end'));
+            $events->where('date', '<=', $request->input('generator_end'));
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $daily = $spreadsheet->getActiveSheet();
+        $daily->setTitle('Daily totals');
+        $daily->fromArray([['BS Date', 'Generator', 'Total Running', 'Total Outage', 'Initial', 'Final', 'Total Generation (kWh)']], null, 'A1');
+        $row = 2;
+        foreach ($days->get() as $day) {
+            $daily->fromArray([[
+                $day->date,
+                'Generator ' . $day->generator,
+                $day->total_running,
+                $day->total_outage,
+                $day->initial_reading,
+                $day->final_reading,
+                $day->total_generation_kwh,
+            ]], null, 'A' . $row);
+            $row++;
+        }
+
+        $outages = $spreadsheet->createSheet();
+        $outages->setTitle('Outages');
+        $outages->fromArray([['BS Date', 'Generator', 'S.No', 'To', 'Resume', 'Synch', 'Total Outage', 'Reason']], null, 'A1');
+        $row = 2;
+        foreach ($events->get() as $event) {
+            $outages->fromArray([[
+                $event->date,
+                'Generator ' . $event->generator,
+                $event->serial,
+                $event->trip_to,
+                $event->resume_hrs,
+                $event->synch_hrs,
+                $event->outage_hrs,
+                $event->reason,
+            ]], null, 'A' . $row);
+            $row++;
+        }
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, 'generator-meter-import.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function destroyGeneratorLog(GeneratorDailyLog $generatorDailyLog)
+    {
+        $generatorDailyLog->outages()->delete();
+        $generatorDailyLog->delete();
+
+        return redirect()
+            ->route('admin.import_export', ['tab' => 'generator'])
+            ->with('success', 'Generator meter row deleted.');
+    }
+
+    public function importPlantLog(Request $request, PlantLogImportService $importer)
+    {
+        $wantsJson = $request->ajax() || $request->wantsJson() || $request->expectsJson();
+
+        try {
+            $request->validate([
+                'import_file' => ['required', 'file', 'max:30720', 'mimes:xlsx,xls'],
+            ], [
+                'import_file.required' => 'Please choose a Log Import Excel file to upload.',
+                'import_file.max' => 'File is too large. Maximum size is 30 MB.',
+                'import_file.mimes' => 'Only .xlsx or .xls files are allowed.',
+            ]);
+        } catch (ValidationException $e) {
+            if ($wantsJson) {
+                return response()->json([
+                    'success' => false,
+                    'title' => 'Invalid File',
+                    'message' => 'Please upload a valid Excel file (.xlsx or .xls).',
+                    'details' => collect($e->errors())->flatten()->values()->all(),
+                ], 422);
+            }
+
+            return redirect()->route('admin.import_export', ['tab' => 'log'])
+                ->withErrors($e->errors())
+                ->with('error', 'File validation failed.');
+        }
+
+        $file = $request->file('import_file');
+        $originalName = $file->getClientOriginalName();
+        $storedPath = null;
+        $startedAt = microtime(true);
+
+        try {
+            $parsed = $importer->parse($file->getRealPath(), $originalName);
+            $storedPath = $file->storeAs(
+                'imports/plant-logs/' . now()->format('Y/m'),
+                now()->format('Ymd_His') . '_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $originalName),
+                'local'
+            );
+
+            $existingDates = LogDay::query()->pluck('date')->flip()->all();
+            $newDays = [];
+            $duplicateDays = 0;
+            foreach ($parsed['days'] as $day) {
+                if (isset($existingDates[$day['date']])) {
+                    $duplicateDays++;
+                    continue;
+                }
+                $existingDates[$day['date']] = true;
+                $newDays[] = $day;
+            }
+
+            if ($newDays === []) {
+                if ($storedPath) {
+                    Storage::disk('local')->delete($storedPath);
+                }
+                $payload = [
+                    'success' => false,
+                    'title' => 'Nothing New to Import',
+                    'message' => 'No new log days were saved.',
+                    'details' => [
+                        $duplicateDays > 0 ? "{$duplicateDays} day sheet(s) already exist." : 'No day sheets found.',
+                        'Time taken: ' . round(microtime(true) - $startedAt, 1) . ' second(s).',
+                    ],
+                ];
+
+                return $wantsJson
+                    ? response()->json($payload, 422)
+                    : redirect()->route('admin.import_export', ['tab' => 'log'])->with('error', $payload['message']);
+            }
+
+            $newDateSet = collect($newDays)->pluck('date')->flip()->all();
+            $insertedHours = 0;
+
+            DB::transaction(function () use (
+                $parsed, $originalName, $storedPath, $newDays, $newDateSet,
+                &$insertedHours, $duplicateDays
+            ) {
+                $batch = ImportBatch::create([
+                    'type' => ImportBatch::TYPE_LOG,
+                    'original_filename' => $originalName,
+                    'stored_path' => $storedPath,
+                    'record_count' => 0,
+                    'skipped_count' => (int) ($parsed['skipped'] ?? 0),
+                    'duplicate_count' => $duplicateDays,
+                    'imported_by' => Auth::id(),
+                    'imported_at' => now(),
+                    'notes' => $parsed['month_label'] ?? null,
+                ]);
+
+                $dayIds = [];
+                foreach ($newDays as $day) {
+                    $day['import_batch_id'] = $batch->id;
+                    $created = LogDay::create($day);
+                    $dayIds[$created->date] = $created->id;
+                }
+
+                foreach ($parsed['unit_hours'] as $row) {
+                    if (!isset($newDateSet[$row['date']])) {
+                        continue;
+                    }
+                    $row['import_batch_id'] = $batch->id;
+                    $row['log_day_id'] = $dayIds[$row['date']];
+                    LogUnitHour::create($row);
+                    $insertedHours++;
+                }
+                foreach ($parsed['line_hours'] as $row) {
+                    if (!isset($newDateSet[$row['date']])) {
+                        continue;
+                    }
+                    $row['import_batch_id'] = $batch->id;
+                    $row['log_day_id'] = $dayIds[$row['date']];
+                    LogLineHour::create($row);
+                }
+                foreach ($parsed['meter_hours'] as $row) {
+                    if (!isset($newDateSet[$row['date']])) {
+                        continue;
+                    }
+                    $row['import_batch_id'] = $batch->id;
+                    $row['log_day_id'] = $dayIds[$row['date']];
+                    LogMeterHour::create($row);
+                }
+                foreach ($parsed['unit_days'] as $row) {
+                    if (!isset($newDateSet[$row['date']])) {
+                        continue;
+                    }
+                    $row['import_batch_id'] = $batch->id;
+                    $row['log_day_id'] = $dayIds[$row['date']];
+                    LogUnitDay::create($row);
+                }
+
+                $batch->update([
+                    'record_count' => count($newDays) + $insertedHours,
+                ]);
+            });
+
+            $elapsed = round(microtime(true) - $startedAt, 1);
+            $payload = [
+                'success' => true,
+                'title' => 'Import Successful',
+                'message' => count($newDays) . ' log day(s) imported.',
+                'details' => array_values(array_filter([
+                    count($newDays) . ' day sheet(s) and ' . $insertedHours . ' unit-hour row(s) saved.',
+                    $duplicateDays > 0 ? "{$duplicateDays} existing day(s) skipped." : null,
+                    ...array_slice($parsed['warnings'] ?? [], 0, 6),
+                    "Time taken: {$elapsed} second(s).",
+                ])),
+                'redirect' => route('admin.import_export', ['tab' => 'log']),
+            ];
+
+            return $wantsJson
+                ? response()->json($payload)
+                : redirect()->route('admin.import_export', ['tab' => 'log'])->with('import_result', $payload);
+        } catch (PlantLogImportException $e) {
+            if ($storedPath) {
+                Storage::disk('local')->delete($storedPath);
+            }
+            $payload = [
+                'success' => false,
+                'title' => 'Import Failed',
+                'message' => $e->getMessage(),
+                'details' => array_values(array_filter($e->details())),
+            ];
+
+            return $wantsJson
+                ? response()->json($payload, 422)
+                : redirect()->route('admin.import_export', ['tab' => 'log'])
+                    ->with('error', $e->getMessage())
+                    ->with('import_errors', $payload['details']);
+        } catch (Throwable $e) {
+            report($e);
+            if ($storedPath) {
+                Storage::disk('local')->delete($storedPath);
+            }
+            $payload = [
+                'success' => false,
+                'title' => 'Import Failed',
+                'message' => 'Something went wrong while importing. No records were saved.',
+                'details' => [config('app.debug') ? $e->getMessage() : 'Please try again with the monthly plant log Excel.'],
+            ];
+
+            return $wantsJson
+                ? response()->json($payload, 500)
+                : redirect()->route('admin.import_export', ['tab' => 'log'])->with('error', $payload['message']);
+        }
+    }
+
+    public function exportPlantLog(Request $request): StreamedResponse
+    {
+        $days = LogUnitDay::query()->orderBy('date')->orderBy('unit');
+        if ($request->filled('log_unit')) {
+            $days->where('unit', (int) $request->input('log_unit'));
+        }
+        if ($request->filled('log_start')) {
+            $days->where('date', '>=', $request->input('log_start'));
+        }
+        if ($request->filled('log_end')) {
+            $days->where('date', '<=', $request->input('log_end'));
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $daily = $spreadsheet->getActiveSheet();
+        $daily->setTitle('Daily units');
+        $daily->fromArray([['BS Date', 'Unit', 'Hours', 'Avg KW', 'Energy kWh', 'First KWH', 'Last KWH']], null, 'A1');
+        $r = 2;
+        foreach ($days->get() as $day) {
+            $daily->fromArray([[
+                $day->date, 'Unit ' . $day->unit, $day->hour_count, $day->avg_kw, $day->energy_kwh,
+                $day->first_kwh, $day->last_kwh,
+            ]], null, 'A' . $r++);
+        }
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, 'log-import.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function downloadPlantLogTemplate(): StreamedResponse
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('2083-05-01');
+
+        $sheet->setCellValue('A1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT');
+        $sheet->setCellValue('Q1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT');
+        $sheet->setCellValue('AF1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT');
+        $sheet->setCellValue('AR1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT');
+        $sheet->setCellValue('A2', 'DATE:01/05/2083');
+        $sheet->setCellValue('Q2', 'DATE:01/05/2083');
+        $sheet->setCellValue('AR2', 'DATE:01/05/2083');
+        $sheet->setCellValue('A3', 'UNIT-1 LOG SHEET');
+        $sheet->setCellValue('Q3', 'UNIT-2 LOG SHEET');
+        $sheet->setCellValue('AF3', '11 KV LINE PANEL PARAMETERS');
+        $sheet->setCellValue('AR3', 'METER READING');
+
+        $sheet->fromArray(['TIME', 'RPM', 'GENERATOR VOLTAGE', '', '', 'GENERATOR CURRENT', '', '', 'FREQ.', 'Kvar', 'PF', 'KW', 'KWH', 'AVR', ''], null, 'A4');
+        $sheet->fromArray(['HRS', '', 'RY', 'YB', 'BR', '11', '12', '13', 'HZ', '', '', '', '', 'V', 'I'], null, 'A5');
+        $sheet->fromArray(['', 'RPM', 'GENERATOR VOLTAGE', '', '', 'GENERATOR CURRENT', '', '', 'FREQ.', 'Kvar', 'PF', 'KW', 'KWH', 'AVR', ''], null, 'Q4');
+        $sheet->fromArray(['', '', 'RY', 'YB', 'BR', 'R', 'Y', 'B', 'HZ', '', '', '', '', 'V', 'I'], null, 'Q5');
+        $sheet->fromArray(['LINE VOLTAGE', '', '', 'LINE CURRENT', '', '', 'FREQ.', 'PF', 'KW', 'KVAr', 'KWH'], null, 'AF4');
+        $sheet->fromArray(['RY', 'YB', 'BR', 'RY', 'YB', 'BR', 'HZ'], null, 'AF5');
+        $sheet->fromArray(['TIME', 'MAIN METER', 'CHECK METER', 'MAIN M. DIFF.', 'CHECK M. DIFF.'], null, 'AR4');
+
+        $sheet->fromArray(['1:00', 750, 418, 416, 415, 677, 701, 699, 50, 48, 0.995, 496, 100000, 52, 8.4], null, 'A6');
+        $sheet->fromArray([750, 418, 416, 415, 678, 703, 700, 50, 58, 0.993, 496, 50000, 55, 7.5], null, 'Q6');
+        $sheet->fromArray([11.65, 11.73, 11.65, 49.3, 49.5, 51.6, 50, 0.99, 1009, 46, 1800000], null, 'AF6');
+        $sheet->fromArray(['1:00', 18500000, null, 1000, 0], null, 'AR6');
+        $sheet->fromArray(['0:00', 750, 414, 413, 411, 682, 702, 701, 50, 50, 0.994, 495, 101000, 54, 8.6], null, 'A29');
+        $sheet->fromArray([750, 414, 413, 411, 685, 706, 706, 50, 60, 0.992, 495, 51000, 55, 7.6], null, 'Q29');
+        $sheet->fromArray([11.56, 11.64, 11.56, 49.6, 49.7, 51.3, 50, 0.99, 1001, 32, 1802300], null, 'AF29');
+        $sheet->fromArray(['0:00', 18524000, null, 1000, 0], null, 'AR29');
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, 'log-import-template.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function destroyPlantLog(LogDay $logDay)
+    {
+        $logDay->unitOutages()->delete();
+        $logDay->unitHours()->delete();
+        $logDay->lineHours()->delete();
+        $logDay->meterHours()->delete();
+        $logDay->unitDays()->delete();
+        $logDay->delete();
+
+        return redirect()
+            ->route('admin.import_export', ['tab' => 'log'])
+            ->with('success', 'Log day deleted.');
     }
 
     // ---- Legacy generation CSV import/export (kept for reference) ----

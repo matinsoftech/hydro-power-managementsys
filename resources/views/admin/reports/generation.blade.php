@@ -101,6 +101,16 @@
         margin-top: .25rem;
         line-height: 1.3;
     }
+    .fr-meter-group { margin-bottom: .85rem; }
+    .fr-meter-title {
+        font-size: .75rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        margin: 0 0 .4rem .15rem;
+    }
+    .fr-meter-group.main .fr-meter-title { color: #9a4318; }
+    .fr-meter-group.check .fr-meter-title { color: #1d4ed8; }
 
     .tooltip .tooltip-inner {
         max-width: 240px;
@@ -186,6 +196,31 @@
         background: #fff;
         cursor: pointer;
     }
+    .fr-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: .75rem;
+    }
+    .fr-preset {
+        border: 1px solid var(--fr-border);
+        background: #fff;
+        color: var(--fr-text);
+        border-radius: 999px;
+        padding: .28rem .7rem;
+        font-size: .75rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    .fr-preset:hover {
+        border-color: var(--fr-accent);
+        color: #087880;
+    }
+    .fr-preset.active {
+        background: var(--fr-accent);
+        border-color: var(--fr-accent);
+        color: #fff;
+    }
     .ndp-container, .ndp-popup, [class*="nepali-date"] {
         z-index: 1080 !important;
     }
@@ -238,7 +273,15 @@
         </div>
     </div>
 
-    <form method="GET" action="{{ route('admin.reports.generation') }}" class="fr-filters">
+    <form method="GET" action="{{ route('admin.reports.generation') }}" class="fr-filters" id="generationFilterForm">
+        <div class="fr-presets" role="group" aria-label="Quick date range">
+            <button type="button" class="fr-preset" data-range="today" title="Today in the Nepali calendar">Today</button>
+            <button type="button" class="fr-preset" data-range="yesterday" title="Yesterday in the Nepali calendar">Yesterday</button>
+            <button type="button" class="fr-preset" data-range="this_week" title="This week, Sunday through today (BS)">This week</button>
+            <button type="button" class="fr-preset" data-range="last_week" title="Last week, Sunday through Saturday (BS)">Last week</button>
+            <button type="button" class="fr-preset" data-range="last_month" title="The full previous Nepali month">Last month</button>
+            <button type="button" class="fr-preset" data-range="this_month" title="This Nepali month, from the 1st through today">This month</button>
+        </div>
         <div class="row g-2 align-items-end">
             <div class="col-md-4">
                 <label class="form-label small text-muted mb-1">
@@ -275,85 +318,94 @@
             </div>
         </div>
     @else
-        <div class="row g-2 mb-3">
-            <div class="col-6 col-lg-3">
-                <div class="fr-kpi accent">
-                    <div class="fr-kpi-top">
-                        <div class="label">Total Days</div>
-                        <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Number of daily 24-hour reading rows in the selected BS date range.">i</button>
+        <div class="fr-meter-group main">
+            <div class="fr-meter-title">Main meter</div>
+            <div class="row g-2">
+                <div class="col-6 col-lg-3">
+                    <div class="fr-kpi warn">
+                        <div class="fr-kpi-top">
+                            <div class="label">Total Main (kWh)</div>
+                            <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Sum of Main meter GENERATION (KWH) for all days in the filter.">i</button>
+                        </div>
+                        <div class="value">{{ number_format($k['total_main_kwh'], 0) }}</div>
+                        <div class="sub">Avg {{ number_format($k['avg_main_kwh'], 0) }} / day</div>
                     </div>
-                    <div class="value">{{ number_format($k['total_days']) }}</div>
-                    <div class="sub">Daily meter readings</div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="fr-kpi accent">
+                        <div class="fr-kpi-top">
+                            <div class="label">Main-only Days</div>
+                            <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Days where Main meter has generation but Check meter is zero or blank.">i</button>
+                        </div>
+                        <div class="value">{{ number_format($k['main_only_days']) }}</div>
+                        <div class="sub">Typical daily rows</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="fr-kpi peak">
+                        <div class="fr-kpi-top">
+                            <div class="label">Peak Main Day</div>
+                            <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="BS date with the highest Main meter daily generation in this filter.">i</button>
+                        </div>
+                        <div class="value sm">{{ $k['peak_main_date'] ?: '—' }}</div>
+                        <div class="sub">{{ number_format($k['peak_main_kwh'], 0) }} kWh</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="fr-kpi accent">
+                        <div class="fr-kpi-top">
+                            <div class="label">Total Days</div>
+                            <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Number of daily 24-hour reading rows in the selected BS date range.">i</button>
+                        </div>
+                        <div class="value">{{ number_format($k['total_days']) }}</div>
+                        <div class="sub">Daily meter readings</div>
+                    </div>
                 </div>
             </div>
-            <div class="col-6 col-lg-3">
-                <div class="fr-kpi warn">
-                    <div class="fr-kpi-top">
-                        <div class="label">Total Main (kWh)</div>
-                        <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Sum of Main meter GENERATION (KWH) for all days in the filter.">i</button>
+        </div>
+
+        <div class="fr-meter-group check">
+            <div class="fr-meter-title">Check meter</div>
+            <div class="row g-2">
+                <div class="col-6 col-lg-3">
+                    <div class="fr-kpi info">
+                        <div class="fr-kpi-top">
+                            <div class="label">Total Check (kWh)</div>
+                            <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Sum of Check meter GENERATION (KWH) for all days in the filter.">i</button>
+                        </div>
+                        <div class="value">{{ number_format($k['total_check_kwh'], 0) }}</div>
+                        <div class="sub">{{ $k['check_share_pct'] }}% of combined</div>
                     </div>
-                    <div class="value">{{ number_format($k['total_main_kwh'], 0) }}</div>
-                    <div class="sub">Avg {{ number_format($k['avg_main_kwh'], 0) }} / day</div>
                 </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="fr-kpi info">
-                    <div class="fr-kpi-top">
-                        <div class="label">Total Check (kWh)</div>
-                        <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Sum of Check meter GENERATION (KWH) for all days in the filter.">i</button>
+                <div class="col-6 col-lg-3">
+                    <div class="fr-kpi info">
+                        <div class="fr-kpi-top">
+                            <div class="label">Check-only Days</div>
+                            <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Days where Check meter has generation but Main meter is zero (e.g. month-end check row).">i</button>
+                        </div>
+                        <div class="value">{{ number_format($k['check_only_days']) }}</div>
+                        <div class="sub">Check meter active</div>
                     </div>
-                    <div class="value">{{ number_format($k['total_check_kwh'], 0) }}</div>
-                    <div class="sub">{{ $k['check_share_pct'] }}% of combined</div>
                 </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="fr-kpi ok">
-                    <div class="fr-kpi-top">
-                        <div class="label">Combined (kWh)</div>
-                        <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Main + Check generation total for the selected period.">i</button>
+                <div class="col-6 col-lg-3">
+                    <div class="fr-kpi slate">
+                        <div class="fr-kpi-top">
+                            <div class="label">Peak Check Day</div>
+                            <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="BS date with the highest Check meter daily generation in this filter.">i</button>
+                        </div>
+                        <div class="value sm">{{ $k['peak_check_date'] ?: '—' }}</div>
+                        <div class="sub">{{ number_format($k['peak_check_kwh'], 0) }} kWh</div>
                     </div>
-                    <div class="value">{{ number_format($k['total_combined_kwh'], 0) }}</div>
-                    <div class="sub">Main + Check</div>
                 </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="fr-kpi accent">
-                    <div class="fr-kpi-top">
-                        <div class="label">Main-only Days</div>
-                        <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Days where Main meter has generation but Check meter is zero or blank.">i</button>
+                <div class="col-6 col-lg-3">
+                    <div class="fr-kpi info">
+                        <div class="fr-kpi-top">
+                            <div class="label">Avg Check (kWh)</div>
+                            <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Average Check meter generation per day in the selected range, including days with no check reading.">i</button>
+                        </div>
+                        <div class="value">{{ number_format($k['avg_check_kwh'], 0) }}</div>
+                        <div class="sub">Per day in this range</div>
                     </div>
-                    <div class="value">{{ number_format($k['main_only_days']) }}</div>
-                    <div class="sub">Typical daily rows</div>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="fr-kpi info">
-                    <div class="fr-kpi-top">
-                        <div class="label">Check-only Days</div>
-                        <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="Days where Check meter has generation but Main meter is zero (e.g. month-end check row).">i</button>
-                    </div>
-                    <div class="value">{{ number_format($k['check_only_days']) }}</div>
-                    <div class="sub">Check meter active</div>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="fr-kpi peak">
-                    <div class="fr-kpi-top">
-                        <div class="label">Peak Main Day</div>
-                        <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="BS date with the highest Main meter daily generation in this filter.">i</button>
-                    </div>
-                    <div class="value sm">{{ $k['peak_main_date'] ?: '—' }}</div>
-                    <div class="sub">{{ number_format($k['peak_main_kwh'], 0) }} kWh</div>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="fr-kpi slate">
-                    <div class="fr-kpi-top">
-                        <div class="label">Peak Check Day</div>
-                        <button type="button" class="fr-info-btn" data-bs-toggle="tooltip" title="BS date with the highest Check meter daily generation in this filter.">i</button>
-                    </div>
-                    <div class="value sm">{{ $k['peak_check_date'] ?: '—' }}</div>
-                    <div class="sub">{{ number_format($k['peak_check_kwh'], 0) }} kWh</div>
                 </div>
             </div>
         </div>
@@ -698,6 +750,65 @@
             });
         });
     }
+
+    (function setupRangePresets() {
+        var ND = window.NepaliDatePicker && NepaliDatePicker.NepaliDate;
+        var form = document.getElementById('generationFilterForm');
+        var startEl = document.getElementById('generationStartBs');
+        var endEl = document.getElementById('generationEndBs');
+        if (!ND || typeof ND.today !== 'function' || !form || !startEl || !endEl) {
+            return;
+        }
+
+        function ymd(date) {
+            if (date && typeof date.format === 'function') {
+                return date.format('YYYY-MM-DD');
+            }
+            var month = date.getMonth();
+            var day = date.getDate();
+            return date.getYear() + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        }
+
+        function copy(date) {
+            if (typeof ND.parse === 'function') {
+                return ND.parse(ymd(date), 'YYYY-MM-DD');
+            }
+            return date;
+        }
+
+        function shift(date, days) {
+            return copy(date).add(days, 'day');
+        }
+
+        function boundsFor(key, today) {
+            var weekStart = shift(today, -today.getDay());
+            var monthStart = shift(today, 1 - today.getDate());
+            var prevMonthEnd = shift(monthStart, -1);
+            if (key === 'today') return [today, today];
+            if (key === 'yesterday') return [shift(today, -1), shift(today, -1)];
+            if (key === 'this_week') return [weekStart, today];
+            if (key === 'last_week') return [shift(weekStart, -7), shift(weekStart, -1)];
+            if (key === 'this_month') return [monthStart, today];
+            if (key === 'last_month') return [shift(prevMonthEnd, 1 - prevMonthEnd.getDate()), prevMonthEnd];
+            return null;
+        }
+
+        var today = ND.today();
+        document.querySelectorAll('.fr-preset[data-range]').forEach(function (button) {
+            var bounds = boundsFor(button.getAttribute('data-range'), today);
+            if (!bounds) return;
+            var start = ymd(bounds[0]);
+            var end = ymd(bounds[1]);
+            if (startEl.value === start && endEl.value === end) {
+                button.classList.add('active');
+            }
+            button.addEventListener('click', function () {
+                startEl.value = start;
+                endEl.value = end;
+                form.submit();
+            });
+        });
+    })();
 
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('.fr-info-btn'));
     tooltipTriggerList.forEach(function (el) {

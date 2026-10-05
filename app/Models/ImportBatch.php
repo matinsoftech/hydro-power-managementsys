@@ -14,6 +14,8 @@ class ImportBatch extends Model
 
     public const TYPE_FAILURE = 'failure';
     public const TYPE_GENERATION = 'generation';
+    public const TYPE_GENERATOR = 'generator';
+    public const TYPE_LOG = 'log';
 
     protected $fillable = [
         'type',
@@ -55,6 +57,21 @@ class ImportBatch extends Model
     public function generationReadings(): HasMany
     {
         return $this->hasMany(GenerationReading::class);
+    }
+
+    public function generatorDailyLogs(): HasMany
+    {
+        return $this->hasMany(GeneratorDailyLog::class);
+    }
+
+    public function generatorOutages(): HasMany
+    {
+        return $this->hasMany(GeneratorOutage::class);
+    }
+
+    public function logDays(): HasMany
+    {
+        return $this->hasMany(LogDay::class);
     }
 
     public function isUndone(): bool

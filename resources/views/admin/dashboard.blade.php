@@ -1,748 +1,760 @@
 @extends('layouts.app')
 
-@section('title','Dashboard')
+@section('title', 'Dashboard')
 
 @section('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nepali-bs-date-picker/dist/nepali-date-picker.min.css">
 <style>
-    .btn-lg-circle{
-        height: 250px;
-        width: 250px;
-        border-radius: 100%;
-        font-size: xx-large;
+    .hp-dash {
+        --hp-blue: #2f6bff;
+        --hp-blue-soft: #eaf0ff;
+        --hp-green: #16a34a;
+        --hp-green-soft: #e9f9ef;
+        --hp-red: #ef4444;
+        --hp-red-soft: #fdecec;
+        --hp-purple: #7c3aed;
+        --hp-purple-soft: #f3eaff;
+        --hp-ink: #1f2937;
+        --hp-mute: #6b7280;
+        --hp-line: #e8ecf3;
+        --hp-bg: #f5f7fb;
+        --hp-teal: #0aa1aa;
+        padding: 1.25rem 1.25rem 2rem;
+        color: var(--hp-ink);
     }
-</style>
-<style>
-    .main_div{
-        position: relative;
+    .hp-dash .hp-head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1rem;
+        margin-bottom: 1.15rem;
     }
-    #map {
-        height: 100%;
-        width: 100%;
-    }
-    html, body {
-        height: 100%;
+    .hp-dash .hp-head h3 {
         margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+    .hp-dash .hp-head p {
+        margin: .35rem 0 0;
+        color: var(--hp-mute);
+        font-size: .95rem;
+    }
+    .hp-dash .hp-range-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .55rem;
+    }
+    .hp-dash .hp-range {
+        display: inline-flex;
+        align-items: center;
+        gap: .55rem;
+        background: #fff;
+        border: 1px solid var(--hp-line);
+        border-radius: 10px;
+        padding: .55rem .85rem;
+        color: var(--hp-ink);
+        font-size: .88rem;
+        font-weight: 500;
+        min-width: 190px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    }
+    .hp-dash .hp-range i { color: var(--hp-mute); }
+    .hp-dash .hp-range-form .nepali-datepicker {
+        width: 150px;
+        border: 1px solid var(--hp-line);
+        border-radius: 10px;
+        padding: .55rem .75rem;
+        font-size: .88rem;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+    }
+    .hp-dash .hp-apply {
+        background: var(--hp-teal);
+        border: 1px solid var(--hp-teal);
+        color: #fff;
+        border-radius: 10px;
+        padding: .5rem 1rem;
+        font-size: .88rem;
+        font-weight: 600;
+    }
+    .hp-dash .hp-apply:hover { filter: brightness(.95); color: #fff; }
+    .ndp-container, .ndp-popup, [class*="nepali-date"] { z-index: 1080 !important; }
+    .hp-dash .hp-card {
+        background: #fff;
+        border: 1px solid var(--hp-line);
+        border-radius: 14px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .04);
+        height: 100%;
+    }
+    .hp-dash .hp-kpi {
+        padding: 1.1rem 1.15rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: .85rem;
+    }
+    .hp-dash .hp-kpi-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: .75rem;
+    }
+    .hp-dash .hp-kpi-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        flex-shrink: 0;
+    }
+    .hp-dash .hp-kpi-icon.blue { background: var(--hp-blue-soft); color: var(--hp-blue); }
+    .hp-dash .hp-kpi-icon.green { background: var(--hp-green-soft); color: var(--hp-green); }
+    .hp-dash .hp-kpi-icon.red { background: var(--hp-red-soft); color: var(--hp-red); }
+    .hp-dash .hp-kpi-icon.purple { background: var(--hp-purple-soft); color: var(--hp-purple); }
+    .hp-dash .hp-kpi-icon.teal { background: #e6f7f8; color: var(--hp-teal); }
+    .hp-dash .hp-kpi-icon.orange { background: #fff4e8; color: #ea580c; }
+    .hp-dash .hp-kpi-icon.indigo { background: #eef2ff; color: #4f46e5; }
+    .hp-dash .hp-kpi-icon.cyan { background: #ecfeff; color: #0891b2; }
+    .hp-dash .hp-kpi-label {
+        font-size: .82rem;
+        color: var(--hp-mute);
+        margin-bottom: .25rem;
+    }
+    .hp-dash .hp-kpi-value {
+        font-size: 1.55rem;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+    }
+    .hp-dash .hp-kpi-sub {
+        font-size: .75rem;
+        color: var(--hp-mute);
+        margin-top: .3rem;
+    }
+    .hp-dash .hp-kpi-detail {
+        font-size: .72rem;
+        color: #94a3b8;
+        margin-top: .15rem;
+    }
+    .hp-dash .hp-kpi-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: .75rem;
+    }
+    .hp-dash .hp-trend {
+        font-size: .75rem;
+        font-weight: 600;
+        color: var(--hp-green);
+    }
+    .hp-dash .hp-trend.flat { color: var(--hp-mute); }
+    .hp-dash .hp-trend.down { color: var(--hp-red); }
+    .hp-dash .hp-spark {
+        width: 88px;
+        height: 34px;
+    }
+    .hp-dash .hp-panel {
+        padding: 1.1rem 1.2rem 1.2rem;
+    }
+    .hp-dash .hp-panel-h {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .75rem;
+        margin-bottom: 1rem;
+    }
+    .hp-dash .hp-panel-h h5 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+    .hp-dash .hp-mini-select {
+        border: 1px solid var(--hp-line);
+        background: #fff;
+        border-radius: 8px;
+        padding: .35rem .65rem;
+        font-size: .8rem;
+        color: var(--hp-ink);
+    }
+    .hp-dash .hp-chart-wrap {
+        position: relative;
+        height: 280px;
+    }
+    .hp-dash .hp-donut-wrap {
+        position: relative;
+        height: 220px;
+        max-width: 260px;
+        margin: 0 auto;
+    }
+    .hp-dash .hp-donut-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        text-align: center;
+    }
+    .hp-dash .hp-donut-center strong {
+        font-size: 1.55rem;
+        line-height: 1;
+    }
+    .hp-dash .hp-donut-center span {
+        font-size: .78rem;
+        color: var(--hp-mute);
+        margin-top: .25rem;
+    }
+    .hp-dash .hp-legend {
+        list-style: none;
+        margin: 1rem 0 0;
         padding: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .55rem .85rem;
     }
-    .control-panel {
+    .hp-dash .hp-legend li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+        font-size: .86rem;
+        color: var(--hp-mute);
+    }
+    .hp-dash .hp-legend .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: .4rem;
+    }
+    .hp-dash .hp-legend b { color: var(--hp-ink); font-weight: 600; }
+    .hp-dash .hp-table {
         width: 100%;
-        max-width: 600px;
-        z-index: 1;
-        background-color: white;
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        margin: 0;
     }
-    .control-panel input,
-    .control-panel select {
-        margin-bottom: 5px;
+    .hp-dash .hp-table th {
+        font-size: .75rem;
+        font-weight: 600;
+        color: var(--hp-mute);
+        border-bottom: 1px solid var(--hp-line);
+        padding: .65rem .4rem;
+        white-space: nowrap;
+        background: transparent;
     }
-    .control-panel h3{
-      font-size: 24px;
-      color: #000;
+    .hp-dash .hp-table td {
+        font-size: .88rem;
+        padding: .8rem .4rem;
+        border-bottom: 1px solid #f1f4f8;
+        vertical-align: middle;
     }
-
-    .control-panel input,
-    .control-panel select{
-     padding: 10px;
-     width: 100%;
+    .hp-dash .hp-table tr:last-child td { border-bottom: 0; }
+    .hp-dash .hp-status {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        font-weight: 500;
     }
-    .control-panel label{
-        display: block;
+    .hp-dash .hp-status .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--hp-green);
+    }
+    .hp-dash .hp-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: .2rem .65rem;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+    .hp-dash .hp-badge.open { background: #fee2e2; color: #b91c1c; }
+    .hp-dash .hp-badge.solved { background: #dcfce7; color: #15803d; }
+    .hp-dash .hp-sev-major { color: #ea580c; font-weight: 600; }
+    .hp-dash .hp-sev-resolved { color: var(--hp-blue); font-weight: 600; }
+    .hp-dash .hp-view-all {
+        color: var(--hp-blue);
+        font-size: .84rem;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .hp-dash .hp-view-all:hover { text-decoration: underline; }
+    .hp-dash .hp-empty {
+        text-align: center;
+        color: var(--hp-mute);
+        padding: 1.5rem .5rem;
+        font-size: .9rem;
+    }
+    @media (max-width: 767.98px) {
+        .hp-dash { padding: 1rem .75rem 1.5rem; }
+        .hp-dash .hp-head h3 { font-size: 1.4rem; }
+        .hp-dash .hp-chart-wrap { height: 240px; }
     }
 </style>
 @endsection
 
 @section('content')
-    {{-- <div class="page-breadcrumb">
-        <div class="row">
-            <div class="col-7 align-self-center">
-                <h3 class="page-title text-truncate text-dark font-weight-medium mb-1">Good Morning Jason!</h3>
-                <div class="d-flex align-items-center">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb m-0 p-0">
-                            <li class="breadcrumb-item"><a href="index.html">Dashboard</a>
-                            </li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
-            <div class="col-5 align-self-center">
-                <div class="customize-input float-end">
-                    <select
-                        class="custom-select custom-select-set form-control bg-white border-0 custom-shadow custom-radius">
-                        <option selected>Aug 23</option>
-                        <option value="1">July 23</option>
-                        <option value="2">Jun 23</option>
-                    </select>
-                </div>
-            </div>
+@php
+    $k = $dashboard['kpis'];
+    $charts = $dashboard['charts'];
+    $fmtTrend = function ($pct) {
+        $pct = (float) $pct;
+        $abs = abs($pct);
+        if ($pct > 0) return ['up', '↑ ' . $abs . '% vs prior period'];
+        if ($pct < 0) return ['down', '↓ ' . $abs . '% vs prior period'];
+        return ['flat', '→ 0% vs prior period'];
+    };
+    $kpiCards = [
+        ['key' => 'users', 'icon' => 'fa-users', 'color' => 'blue', 'spark' => 'sparkUsers'],
+        ['key' => 'main_mwh', 'icon' => 'fa-bolt', 'color' => 'green', 'spark' => 'sparkMain', 'label' => 'Main Generation (MWh)'],
+        ['key' => 'check_mwh', 'icon' => 'fa-gauge-high', 'color' => 'teal', 'spark' => 'sparkCheck', 'label' => 'Check Generation (MWh)'],
+        ['key' => 'unit1_mwh', 'icon' => 'fa-industry', 'color' => 'orange', 'spark' => 'sparkU1', 'label' => 'Unit 1 Energy (MWh)'],
+        ['key' => 'unit2_mwh', 'icon' => 'fa-industry', 'color' => 'indigo', 'spark' => 'sparkU2', 'label' => 'Unit 2 Energy (MWh)'],
+        ['key' => 'faults', 'icon' => 'fa-triangle-exclamation', 'color' => 'red', 'spark' => 'sparkFaults'],
+        ['key' => 'outages', 'icon' => 'fa-plug-circle-xmark', 'color' => 'cyan', 'spark' => 'sparkOutages', 'label' => 'Generator Outages'],
+        ['key' => 'imports', 'icon' => 'fa-file-import', 'color' => 'purple', 'spark' => 'sparkImports', 'label' => 'Import Batches'],
+    ];
+    $labels = [
+        'users' => 'Total Users',
+        'faults' => 'Total Faults',
+    ];
+@endphp
+<div class="container-fluid hp-dash">
+    <div class="hp-head">
+        <div>
+            <h3>Dashboard</h3>
+            <p>Welcome back — overview for <strong>{{ $dashboard['range']['label'] }}</strong> ({{ $dashboard['range']['days'] }} BS days).</p>
         </div>
-    </div> --}}
-    <!-- ============================================================== -->
-    <!-- End Bread crumb and right sidebar toggle -->
-    <!-- ============================================================== -->
-    <!-- ============================================================== -->
-    <!-- Container fluid  -->
-    <!-- ============================================================== -->
-    <div class="container-fluid">
-        <!-- *************************************************************** -->
-        <!-- Start First Cards -->
-        <!-- *************************************************************** -->
-        <div class="row">
-            <div class="col-sm-6 col-lg-3">
-                <div class="card border-end">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div>
-                                <div class="d-inline-flex align-items-center">
-                                    <h2 class="text-dark mb-1 font-weight-medium">{{ $TotalUsers }}</h2>
-                                    {{-- <span class="badge bg-primary font-12 text-white font-weight-medium rounded-pill ms-2 d-lg-block d-md-none">+18.33%</span> --}}
-                                </div>
-                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Total Number User
-                                </h6>
-                            </div>
-                            <div class="ms-auto mt-md-3 mt-lg-0">
-                                <span class="opacity-7 text-muted"><i data-feather="user-plus"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <form method="GET" action="{{ route('dashboard') }}" class="hp-range-form" id="hpRangeForm">
+            <div class="hp-range" title="Selected BS range">
+                <i class="fa-regular fa-calendar"></i>
+                <span id="hpRangeLabel">{{ $dashboard['range']['label'] }}</span>
             </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="card border-end ">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div>
-                                <h2 class="text-dark mb-1 w-100 text-truncate font-weight-medium">
-                                    {{-- <sup class="set-doller">$</sup> --}}
-                                   {{ $TotalMeterReading }}</h2>
-                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">
-                                    Total meter reading
-                                </h6>
-                            </div>
-                            <div class="ms-auto mt-md-3 mt-lg-0">
-                                {{-- <span class="opacity-7 text-muted"><i data-feather="dollar-sign"></i></span> --}}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="card border-end ">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div>
-                                <div class="d-inline-flex align-items-center">
-                                    <h2 class="text-dark mb-1 font-weight-medium">{{$TotalFault  }}</h2>
-                                    {{-- <span
-                                        class="badge bg-danger font-12 text-white font-weight-medium rounded-pill ms-2 d-md-none d-lg-block">-18.33%</span> --}}
-                                </div>
-                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">
-                                    Total Number of fault
-                                </h6>
-                            </div>
-                            <div class="ms-auto mt-md-3 mt-lg-0">
-                                {{-- <span class="opacity-7 text-muted"><i data-feather="file-plus"></i></span> --}}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <button id="checkInOut" class="btn btn-success btn-lg-circle">
-                            Check In
-                        </button>
-                    </div>
-                </div>
-            {{-- <div class="col-sm-6 col-lg-3">
-                <div class="card ">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div>
-                                <h2 class="text-dark mb-1 font-weight-medium">864</h2>
-                                <h6 class="text-muted font-weight-normal mb-0 w-100 text-truncate">Projects</h6>
-                            </div>
-                            <div class="ms-auto mt-md-3 mt-lg-0">
-                                <span class="opacity-7 text-muted"><i data-feather="globe"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
-        </div>
-        <!-- *************************************************************** -->
-        <!-- End First Cards -->
-        <!-- *************************************************************** -->
-        <!-- *************************************************************** -->
-        <!-- Start Sales Charts Section -->
-        <!-- *************************************************************** -->
-        {{-- <div class="row">
-            <div class="col-lg-4 col-md-12">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <button id="checkInOut" class="btn btn-success btn-lg-circle">
-                            Check In
-                        </button>
-                    </div>
-                </div>
-            </div> --}}
-            {{-- <div class="col-lg-4 col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Net Income</h4>
-                        <div class="net-income mt-4 position-relative" style="height:294px;"></div>
-                        <ul class="list-inline text-center mt-5 mb-2">
-                            <li class="list-inline-item text-muted fst-italic">Sales for this month</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title mb-4">Earning by Location</h4>
-                        <div class="" style="height:180px">
-                            <div id="visitbylocate" style="height:100%"></div>
-                        </div>
-                        <div class="row mb-3 align-items-center mt-5">
-                            <div class="col-4 text-end">
-                                <span class="text-muted font-14">India</span>
-                            </div>
-                            <div class="col-5">
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"
-                                        aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            <div class="col-3 text-end">
-                                <span class="mb-0 font-14 text-dark font-weight-medium">28%</span>
-                            </div>
-                        </div>
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-4 text-end">
-                                <span class="text-muted font-14">UK</span>
-                            </div>
-                            <div class="col-5">
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 74%"
-                                        aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            <div class="col-3 text-end">
-                                <span class="mb-0 font-14 text-dark font-weight-medium">21%</span>
-                            </div>
-                        </div>
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-4 text-end">
-                                <span class="text-muted font-14">USA</span>
-                            </div>
-                            <div class="col-5">
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar bg-cyan" role="progressbar" style="width: 60%"
-                                        aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            <div class="col-3 text-end">
-                                <span class="mb-0 font-14 text-dark font-weight-medium">18%</span>
-                            </div>
-                        </div>
-                        <div class="row align-items-center">
-                            <div class="col-4 text-end">
-                                <span class="text-muted font-14">China</span>
-                            </div>
-                            <div class="col-5">
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: 50%"
-                                        aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            <div class="col-3 text-end">
-                                <span class="mb-0 font-14 text-dark font-weight-medium">12%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
-        </div>
-        <!-- *************************************************************** -->
-        <!-- End Sales Charts Section -->
-        <!-- *************************************************************** -->
-        <!-- *************************************************************** -->
-        <!-- Start Location and Earnings Charts Section -->
-        <!-- *************************************************************** -->
-        {{-- <div class="row">
-            <div class="col-md-6 col-lg-8">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-start">
-                            <h4 class="card-title mb-0">Earning Statistics</h4>
-                            <div class="ms-auto">
-                                <div class="dropdown sub-dropdown">
-                                    <button class="btn btn-link text-muted dropdown-toggle" type="button" id="dd1"
-                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <i data-feather="more-vertical"></i>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dd1">
-                                        <a class="dropdown-item" href="#">Insert</a>
-                                        <a class="dropdown-item" href="#">Update</a>
-                                        <a class="dropdown-item" href="#">Delete</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pl-4 mb-5">
-                            <div class="stats ct-charts position-relative" style="height: 315px;"></div>
-                        </div>
-                        <ul class="list-inline text-center mt-4 mb-0">
-                            <li class="list-inline-item text-muted fst-italic">Earnings for this month</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Recent Activity</h4>
-                        <div class="mt-4 activity">
-                            <div class="d-flex align-items-start border-left-line pb-3">
-                                <div>
-                                    <a href="javascript:void(0)" class="btn btn-info btn-circle mb-2 btn-item">
-                                        <i data-feather="shopping-cart"></i>
-                                    </a>
-                                </div>
-                                <div class="ms-3 mt-2">
-                                    <h5 class="text-dark font-weight-medium mb-2">New Product Sold!</h5>
-                                    <p class="font-14 mb-2 text-muted">John Musa just purchased <br> Cannon 5M
-                                        Camera.
-                                    </p>
-                                    <span class="font-weight-light font-14 text-muted">10 Minutes Ago</span>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-start border-left-line pb-3">
-                                <div>
-                                    <a href="javascript:void(0)" class="btn btn-danger btn-circle mb-2 btn-item">
-                                        <i data-feather="message-square"></i>
-                                    </a>
-                                </div>
-                                <div class="ms-3 mt-2">
-                                    <h5 class="text-dark font-weight-medium mb-2">New Support Ticket</h5>
-                                    <p class="font-14 mb-2 text-muted">Richardson just create support <br>
-                                        ticket</p>
-                                    <span class="font-weight-light font-14 text-muted">25 Minutes Ago</span>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-start border-left-line">
-                                <div>
-                                    <a href="javascript:void(0)" class="btn btn-cyan btn-circle mb-2 btn-item">
-                                        <i data-feather="bell"></i>
-                                    </a>
-                                </div>
-                                <div class="ms-3 mt-2">
-                                    <h5 class="text-dark font-weight-medium mb-2">Notification Pending Order!
-                                    </h5>
-                                    <p class="font-14 mb-2 text-muted">One Pending order from Ryne <br> Doe</p>
-                                    <span class="font-weight-light font-14 mb-1 d-block text-muted">2 Hours
-                                        Ago</span>
-                                    <a href="javascript:void(0)" class="font-14 border-bottom pb-1 border-info">Load
-                                        More</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> --}}
-        <!-- *************************************************************** -->
-        <!-- End Location and Earnings Charts Section -->
-        <!-- *************************************************************** -->
-        <!-- *************************************************************** -->
-        <!-- Start Top Leader Table -->
-        <!-- *************************************************************** -->
-        {{-- <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-4">
-                            <h4 class="card-title">Top Leaders</h4>
-                            <div class="ms-auto">
-                                <div class="dropdown sub-dropdown">
-                                    <button class="btn btn-link text-muted dropdown-toggle" type="button" id="dd1"
-                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <i data-feather="more-vertical"></i>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dd1">
-                                        <a class="dropdown-item" href="#">Insert</a>
-                                        <a class="dropdown-item" href="#">Update</a>
-                                        <a class="dropdown-item" href="#">Delete</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table no-wrap v-middle mb-0">
-                                <thead>
-                                    <tr class="border-0">
-                                        <th class="border-0 font-14 font-weight-medium text-muted">Team Lead
-                                        </th>
-                                        <th class="border-0 font-14 font-weight-medium text-muted px-2">Project
-                                        </th>
-                                        <th class="border-0 font-14 font-weight-medium text-muted">Team</th>
-                                        <th class="border-0 font-14 font-weight-medium text-muted text-center">
-                                            Status
-                                        </th>
-                                        <th class="border-0 font-14 font-weight-medium text-muted text-center">
-                                            Weeks
-                                        </th>
-                                        <th class="border-0 font-14 font-weight-medium text-muted">Budget</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="border-top-0 px-2 py-4">
-                                            <div class="d-flex no-block align-items-center">
-                                                <div class="me-3"><img
-                                                        src="../assets/images/users/widget-table-pic1.jpg" alt="user"
-                                                        class="rounded-circle" width="45" height="45" /></div>
-                                                <div class="">
-                                                    <h5 class="text-dark mb-0 font-16 font-weight-medium">Hanna
-                                                        Gover</h5>
-                                                    <span class="text-muted font-14">hgover@gmail.com</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="border-top-0 text-muted px-2 py-4 font-14">Elite Admin</td>
-                                        <td class="border-top-0 px-2 py-4">
-                                            <div class="popover-icon">
-                                                <a class="btn btn-primary rounded-circle btn-circle font-12"
-                                                    href="javascript:void(0)">DS</a>
-                                                <a class="btn btn-danger rounded-circle btn-circle font-12 popover-item"
-                                                    href="javascript:void(0)">SS</a>
-                                                <a class="btn btn-cyan rounded-circle btn-circle font-12 popover-item"
-                                                    href="javascript:void(0)">RP</a>
-                                                <a class="btn btn-success text-white rounded-circle btn-circle font-20"
-                                                    href="javascript:void(0)">+</a>
-                                            </div>
-                                        </td>
-                                        <td class="border-top-0 text-center px-2 py-4"><i
-                                                class="fa fa-circle text-primary font-12" data-bs-toggle="tooltip"
-                                                data-placement="top" title="In Testing"></i></td>
-                                        <td class="border-top-0 text-center font-weight-medium text-muted px-2 py-4">
-                                            35
-                                        </td>
-                                        <td class="font-weight-medium text-dark border-top-0 px-2 py-4">$96K
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-2 py-4">
-                                            <div class="d-flex no-block align-items-center">
-                                                <div class="me-3"><img
-                                                        src="../assets/images/users/widget-table-pic2.jpg" alt="user"
-                                                        class="rounded-circle" width="45" height="45" /></div>
-                                                <div class="">
-                                                    <h5 class="text-dark mb-0 font-16 font-weight-medium">Daniel
-                                                        Kristeen
-                                                    </h5>
-                                                    <span class="text-muted font-14">Kristeen@gmail.com</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="text-muted px-2 py-4 font-14">Real Homes WP Theme</td>
-                                        <td class="px-2 py-4">
-                                            <div class="popover-icon">
-                                                <a class="btn btn-primary rounded-circle btn-circle font-12"
-                                                    href="javascript:void(0)">DS</a>
-                                                <a class="btn btn-danger rounded-circle btn-circle font-12 popover-item"
-                                                    href="javascript:void(0)">SS</a>
-                                                <a class="btn btn-success text-white rounded-circle btn-circle font-20"
-                                                    href="javascript:void(0)">+</a>
-                                            </div>
-                                        </td>
-                                        <td class="text-center px-2 py-4"><i class="fa fa-circle text-success font-12"
-                                                data-bs-toggle="tooltip" data-placement="top" title="Done"></i>
-                                        </td>
-                                        <td class="text-center text-muted font-weight-medium px-2 py-4">32</td>
-                                        <td class="font-weight-medium text-dark px-2 py-4">$85K</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-2 py-4">
-                                            <div class="d-flex no-block align-items-center">
-                                                <div class="me-3"><img
-                                                        src="../assets/images/users/widget-table-pic3.jpg" alt="user"
-                                                        class="rounded-circle" width="45" height="45" /></div>
-                                                <div class="">
-                                                    <h5 class="text-dark mb-0 font-16 font-weight-medium">Julian
-                                                        Josephs
-                                                    </h5>
-                                                    <span class="text-muted font-14">Josephs@gmail.com</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="text-muted px-2 py-4 font-14">MedicalPro WP Theme</td>
-                                        <td class="px-2 py-4">
-                                            <div class="popover-icon">
-                                                <a class="btn btn-primary rounded-circle btn-circle font-12"
-                                                    href="javascript:void(0)">DS</a>
-                                                <a class="btn btn-danger rounded-circle btn-circle font-12 popover-item"
-                                                    href="javascript:void(0)">SS</a>
-                                                <a class="btn btn-cyan rounded-circle btn-circle font-12 popover-item"
-                                                    href="javascript:void(0)">RP</a>
-                                                <a class="btn btn-success text-white rounded-circle btn-circle font-20"
-                                                    href="javascript:void(0)">+</a>
-                                            </div>
-                                        </td>
-                                        <td class="text-center px-2 py-4"><i class="fa fa-circle text-primary font-12"
-                                                data-bs-toggle="tooltip" data-placement="top" title="Done"></i>
-                                        </td>
-                                        <td class="text-center text-muted font-weight-medium px-2 py-4">29</td>
-                                        <td class="font-weight-medium text-dark px-2 py-4">$81K</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="border-bottom-0 px-2 py-4">
-                                            <div class="d-flex no-block align-items-center">
-                                                <div class="me-3"><img
-                                                        src="../assets/images/users/widget-table-pic4.jpg" alt="user"
-                                                        class="rounded-circle" width="45" height="45" /></div>
-                                                <div class="">
-                                                    <h5 class="text-dark mb-0 font-16 font-weight-medium">Jan
-                                                        Petrovic
-                                                    </h5>
-                                                    <span class="text-muted font-14">hgover@gmail.com</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="border-bottom-0 text-muted px-2 py-4 font-14">Hosting Press
-                                            HTML</td>
-                                        <td class="border-bottom-0 px-2 py-4">
-                                            <div class="popover-icon">
-                                                <a class="btn btn-primary rounded-circle btn-circle font-12"
-                                                    href="javascript:void(0)">DS</a>
-                                                <a class="btn btn-success text-white font-20 rounded-circle btn-circle"
-                                                    href="javascript:void(0)">+</a>
-                                            </div>
-                                        </td>
-                                        <td class="border-bottom-0 text-center px-2 py-4"><i
-                                                class="fa fa-circle text-danger font-12" data-bs-toggle="tooltip"
-                                                data-placement="top" title="In Progress"></i></td>
-                                        <td class="border-bottom-0 text-center text-muted font-weight-medium px-2 py-4">
-                                            23</td>
-                                        <td class="border-bottom-0 font-weight-medium text-dark px-2 py-4">$80K
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> --}}
-        <!-- *************************************************************** -->
-        <div class="container-fluid">
-            <!-- ============================================================== -->
-            <!-- Start Page Content -->
-            <!-- ============================================================== -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            {{-- <h4 class="card-title">Today Meter Reading List
-                                <a href="{{ route('admin.meter-reading.create') }}" class="btn btn-sm btn-primary float-right">Add Meter Reading</a>
-                            </h4> --}}
-                            <div class="table-responsive">
-                               <!-- Display Today's Meter Readings -->
-<h3>Today's Meter Readings</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Main Meter</th>
-            <th>Show Meter</th>
-            <th>Accuracy</th>
-            <th>Remarks</th>
-            <th>Created By</th>
-        </tr>
-    </thead>
-    <tbody>
+            <input type="text" name="start" id="hpStartBs" class="form-control form-control-sm nepali-datepicker"
+                   value="{{ $dashboard['range']['start'] }}" placeholder="Start (BS)" autocomplete="off" readonly>
+            <input type="text" name="end" id="hpEndBs" class="form-control form-control-sm nepali-datepicker"
+                   value="{{ $dashboard['range']['end'] }}" placeholder="End (BS)" autocomplete="off" readonly>
+            <button type="submit" class="btn hp-apply">Apply</button>
+        </form>
+    </div>
 
-        @foreach($todaysMeterReadings as $reading)
-            <tr>
-                <td>{{ $reading->date }}</td>
-                <td>{{ $reading->time }}</td>
-                <td>{{ $reading->main_meter }}</td>
-                <td>{{ $reading->show_meter }}</td>
-                <td>{{ $reading->accuracy }}</td>
-                <td>{{ $reading->remarks }}</td>
-                <td>{{ $reading->createdBy->name }}</td>
-            </tr>
+    <div class="row g-3 mb-3">
+        @foreach($kpiCards as $card)
+            @php
+                $item = $k[$card['key']];
+                [$tClass, $tText] = $fmtTrend($item['trend']);
+                $title = $card['label'] ?? ($labels[$card['key']] ?? ucfirst(str_replace('_', ' ', $card['key'])));
+            @endphp
+            <div class="col-sm-6 col-xl-3">
+                <div class="hp-card hp-kpi">
+                    <div class="hp-kpi-top">
+                        <div>
+                            <div class="hp-kpi-label">{{ $title }}</div>
+                            <div class="hp-kpi-value">
+                                @if(str_contains($card['key'], 'mwh'))
+                                    {{ number_format($item['value'], 2) }}
+                                @else
+                                    {{ number_format($item['value']) }}
+                                @endif
+                            </div>
+                            <div class="hp-kpi-sub">{{ $item['sub'] }}</div>
+                            <div class="hp-kpi-detail">{{ $item['detail'] }}</div>
+                        </div>
+                        <span class="hp-kpi-icon {{ $card['color'] }}"><i class="fa-solid {{ $card['icon'] }}"></i></span>
+                    </div>
+                    <div class="hp-kpi-foot">
+                        <span class="hp-trend {{ $tClass }}">{{ $tText }}</span>
+                        <canvas class="hp-spark" id="{{ $card['spark'] }}" height="34" width="88"></canvas>
+                    </div>
+                </div>
+            </div>
         @endforeach
-    </tbody>
-</table>
-                            </div>
+    </div>
 
-                        </div>
+    <div class="row g-3 mb-3">
+        <div class="col-xl-8">
+            <div class="hp-card hp-panel">
+                <div class="hp-panel-h">
+                    <h5>Generation Overview</h5>
+                    <span class="text-muted small">Plant daily energy (MWh)</span>
+                </div>
+                <div class="hp-chart-wrap">
+                    <canvas id="generationChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <div class="hp-card hp-panel">
+                <div class="hp-panel-h">
+                    <h5>Fault Status</h5>
+                    <span class="text-muted small">All time</span>
+                </div>
+                <div class="hp-donut-wrap">
+                    <canvas id="faultChart"></canvas>
+                    <div class="hp-donut-center">
+                        <strong>{{ number_format($charts['faults']['total']) }}</strong>
+                        <span>Total Faults</span>
                     </div>
                 </div>
-
-            </div>
-        </div>
-        <!-- *************************************************************** -->
-        <div class="main_div" style="width: 100% ;height: 500px">
-            <div id="map"></div>
-        </div>
-
-    </div>
-
-    <div class="modal fade" id="stationModal" tabindex="-1" role="dialog" aria-labelledby="stationModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="stationModalLabel">Station Details</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Name:</strong> <span id="stationName"></span></p>
-                    <p><strong>Level:</strong> <span id="stationLevel"></span></p>
-                    <p><strong>Manager:</strong> <span id="stationManager"></span></p>
-                    <p><strong>Line Man:</strong> <span id="stationLineMan"></span></p>
-                    <p><strong>Capacity:</strong> <span id="stationCapacity"></span></p>
-                    <p><strong>Start Date:</strong> <span id="stationStartDate"></span></p>
-                    <p><strong>Latitude:</strong> <span id="stationLatitude"></span></p>
-                    <p><strong>Longitude:</strong> <span id="stationLongitude"></span></p>
-                </div>
-                <div class="modal-footer">
-                    <form id="deleteStation" action="#" method="POST">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger" data-dismiss="modal">Delete Station</button>
-                    </form>
-                </div>
+                <ul class="hp-legend">
+                    <li><span><span class="dot" style="background:#ef4444"></span>Critical</span><b>{{ $charts['faults']['critical'] }}</b></li>
+                    <li><span><span class="dot" style="background:#f97316"></span>Open / Major</span><b>{{ $charts['faults']['major'] }}</b></li>
+                    <li><span><span class="dot" style="background:#eab308"></span>Minor</span><b>{{ $charts['faults']['minor'] }}</b></li>
+                    <li><span><span class="dot" style="background:#3b82f6"></span>Resolved</span><b>{{ $charts['faults']['resolved'] }}</b></li>
+                </ul>
             </div>
         </div>
     </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-xl-8">
+            <div class="hp-card hp-panel">
+                <div class="hp-panel-h">
+                    <h5>Unit 1 vs Unit 2</h5>
+                    <a href="{{ route('admin.reports.log') }}" class="hp-view-all">Log Report →</a>
+                </div>
+                <div class="hp-chart-wrap">
+                    <canvas id="unitChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <div class="hp-card hp-panel">
+                <div class="hp-panel-h">
+                    <h5>Recent Imports</h5>
+                    <a href="{{ route('admin.import_export') }}" class="hp-view-all">Import / Export →</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="hp-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>File</th>
+                                <th>Rows</th>
+                                <th>When</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($dashboard['recent_imports'] as $batch)
+                                <tr>
+                                    <td>{{ ucfirst($batch->type) }}</td>
+                                    <td title="{{ $batch->original_filename }}">{{ \Illuminate\Support\Str::limit($batch->original_filename, 22) }}</td>
+                                    <td>{{ number_format($batch->record_count) }}</td>
+                                    <td>{{ optional($batch->imported_at)->format('M d H:i') ?: '—' }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="hp-empty">No imports yet.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-7">
+            <div class="hp-card hp-panel">
+                <div class="hp-panel-h">
+                    <h5>Recent Generation Data</h5>
+                    <a href="{{ route('admin.reports.generation') }}" class="hp-view-all">View All →</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="hp-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Hours / Time</th>
+                                <th>Energy (MWh)</th>
+                                <th>Avg KW</th>
+                                <th>Plant / Unit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($dashboard['recent_generation'] as $row)
+                                <tr>
+                                    <td>{{ $row->date }}</td>
+                                    <td>{{ $row->time }}</td>
+                                    <td>{{ number_format((float) $row->generation_mwh, 3) }}</td>
+                                    <td>{{ $row->avg_kw === null ? '—' : number_format((float) $row->avg_kw, 0) }}</td>
+                                    <td>{{ $row->unit }}</td>
+                                    <td>
+                                        <span class="hp-status">
+                                            <span class="dot"></span> {{ $row->status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6" class="hp-empty">No generation rows yet.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-5">
+            <div class="hp-card hp-panel">
+                <div class="hp-panel-h">
+                    <h5>Recent Faults</h5>
+                    <a href="{{ route('admin.reports.fault') }}" class="hp-view-all">View All →</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="hp-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Fault Description</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($dashboard['recent_faults'] as $fault)
+                                @php
+                                    $when = $fault->fault_time ? \Carbon\Carbon::parse($fault->fault_time) : null;
+                                    $isOpen = $fault->status === 'Unsolved';
+                                @endphp
+                                <tr>
+                                    <td>{{ $when ? $when->format('M d, Y') : '—' }}</td>
+                                    <td>{{ $when ? $when->format('H:i') : '—' }}</td>
+                                    <td>{{ $fault->reason ?: '—' }}</td>
+                                    <td class="{{ $isOpen ? 'hp-sev-major' : 'hp-sev-resolved' }}">
+                                        {{ $isOpen ? 'Major' : 'Resolved' }}
+                                    </td>
+                                    <td>
+                                        <span class="hp-badge {{ $isOpen ? 'open' : 'solved' }}">
+                                            {{ $isOpen ? 'Open' : 'Resolved' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="hp-empty">No faults recorded yet.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
-@section('scripts')
-<script src="{{ asset('assets/extra-libs/c3/d3.min.js') }}"></script>
-<script src="{{ asset('assets/extra-libs/c3/c3.min.js') }}"></script>
-<script src="{{ asset('assets/libs/chartist/dist/chartist.min.js') }}"></script>
-<script src="{{ asset('assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js') }}"></script>
-<script src="{{ asset('assets/extra-libs/jvector/jquery-jvectormap-2.0.2.min.js') }}"></script>
-<script src="{{ asset('assets/extra-libs/jvector/jquery-jvectormap-world-mill-en.js') }}"></script>
-<script src="{{ asset('dist/js/pages/dashboards/dashboard1.min.js') }}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjjf_h1Kin_CeaJiT8VanhcNz0-4lhdNQ&libraries=places" async
-defer></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    let map;
-    let rootLatLng = new google.maps.LatLng({{ app('siteSetting')->latitude }}, {{ app('siteSetting')->longitude }});
 
-    let mapOptions = {
-        center: rootLatLng,
-        zoom: 12
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/nepali-bs-date-picker/dist/nepali-date-picker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    function syncRangeLabel() {
+        var startEl = document.getElementById('hpStartBs');
+        var endEl = document.getElementById('hpEndBs');
+        var label = document.getElementById('hpRangeLabel');
+        if (!startEl || !endEl || !label) return;
+        if (startEl.value && endEl.value) {
+            label.textContent = startEl.value + ' - ' + endEl.value;
+        }
+    }
+
+    if (window.NepaliDatePicker && typeof NepaliDatePicker.attach === 'function') {
+        ['#hpStartBs', '#hpEndBs'].forEach(function (selector) {
+            var el = document.querySelector(selector);
+            if (!el) return;
+            NepaliDatePicker.attach(selector, {
+                language: 'en',
+                onChange: function (date) {
+                    if (date && typeof date.format === 'function') {
+                        el.value = date.format('YYYY-MM-DD');
+                        syncRangeLabel();
+                    }
+                },
+            });
+        });
+    }
+
+    var genLabels = @json($charts['generation']['labels']);
+    var genValues = @json($charts['generation']['values']);
+    var unitLabels = @json($charts['units']['labels']);
+    var unit1 = @json($charts['units']['unit1']);
+    var unit2 = @json($charts['units']['unit2']);
+    var faultData = [
+        {{ (int) $charts['faults']['critical'] }},
+        {{ (int) $charts['faults']['major'] }},
+        {{ (int) $charts['faults']['minor'] }},
+        {{ (int) $charts['faults']['resolved'] }}
+    ];
+    var sparks = {
+        sparkUsers: @json($k['users']['spark']),
+        sparkMain: @json($k['main_mwh']['spark']),
+        sparkCheck: @json($k['check_mwh']['spark']),
+        sparkU1: @json($k['unit1_mwh']['spark']),
+        sparkU2: @json($k['unit2_mwh']['spark']),
+        sparkFaults: @json($k['faults']['spark']),
+        sparkOutages: @json($k['outages']['spark']),
+        sparkImports: @json($k['imports']['spark'])
+    };
+    var sparkColors = {
+        sparkUsers: '#2f6bff',
+        sparkMain: '#16a34a',
+        sparkCheck: '#0aa1aa',
+        sparkU1: '#ea580c',
+        sparkU2: '#4f46e5',
+        sparkFaults: '#ef4444',
+        sparkOutages: '#0891b2',
+        sparkImports: '#7c3aed'
     };
 
-    map = new google.maps.Map(document.getElementById('map'), mapOptions);
-
-    let rootMarker = new google.maps.Marker({
-        position: rootLatLng,
-        map: map,
-        icon: {
-            url: "{{ asset('assets/map/root.png') }}",
-            scaledSize: new google.maps.Size(60, 60)
-        },
-        title: "Root Station"
-    });
-
-    function addMarker(location, station, isParentStation = false) {
-        let icon = null;
-
-        if (isParentStation) {
-            icon = {
-                url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-                scaledSize: new google.maps.Size(60, 60)
-            };
-        }
-
-        let marker = new google.maps.Marker({
-            position: location,
-            map: map,
-            icon: icon
-        });
-
-        marker.addListener('click', function() {
-            $('#stationName').text(station.name);
-            $('#stationLevel').text(station.station_level);
-            $('#stationManager').text(station.manager);
-            $('#stationLineMan').text(station.line_man_name);
-            $('#stationCapacity').text(station.capacity);
-            $('#stationStartDate').text(station.start_date);
-            $('#stationLatitude').text(station.latitude);
-            $('#stationLongitude').text(station.longitude);
-            $('#deleteStation').attr('action', '/admin/station/' + station.id);
-            $('#stationModal').modal('show');
-        });
-    }
-
-    function drawLine(start, end) {
-        let line = new google.maps.Polyline({
-            path: [start, end],
-            geodesic: true,
-            strokeColor: '#FF0000',
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-        });
-        line.setMap(map);
-    }
-
-    function plotStations(stations, parentLatLng) {
-        stations.forEach(station => {
-            let stationLatLng = new google.maps.LatLng(station.latitude, station.longitude);
-            addMarker(stationLatLng, station, true);
-            drawLine(parentLatLng, stationLatLng);
-
-            if (station.childs && station.childs.length > 0) {
-                plotStations(station.childs, stationLatLng);
+    function makeSpark(id, values, color) {
+        var el = document.getElementById(id);
+        if (!el || !window.Chart) return;
+        new Chart(el, {
+            type: 'line',
+            data: {
+                labels: values.map(function (_, i) { return i; }),
+                datasets: [{
+                    data: values,
+                    borderColor: color,
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 0
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } }
             }
         });
     }
 
-    // Initial plot with root station as the parent
-    plotStations(@json($stations), rootLatLng);
-});
-</script>
-
-<script>
-    $(function () {
-        $('#checkInOut').on('click', function () {
-            $.ajax({
-                url: "{{ route('user.entry-sys.store') }}",
-                type: "POST",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                },
-                success: function (data) {
-                    if(data.success == true){
-                        if(data.data.check_out_time){
-                            $('#checkInOut').removeClass('btn-danger').addClass('btn-success').text('Check In');
-                        }else{
-                            $('#checkInOut').removeClass('btn-success').addClass('btn-danger').text('Check Out');
-                        }
-                    }else{
-                        toastr.error(data.message);
-                    }
-                },
-                error: function (data) {
-                    console.log(data);
-                }
-            });
-        });
+    Object.keys(sparks).forEach(function (id) {
+        makeSpark(id, sparks[id] || [0, 0, 0, 0, 0, 0, 0], sparkColors[id]);
     });
+
+    var genCtx = document.getElementById('generationChart');
+    if (genCtx && window.Chart) {
+        new Chart(genCtx, {
+            type: 'line',
+            data: {
+                labels: genLabels,
+                datasets: [{
+                    label: 'Generation (MWh)',
+                    data: genValues,
+                    borderColor: '#2f6bff',
+                    backgroundColor: function (context) {
+                        var chart = context.chart;
+                        var area = chart.chartArea;
+                        if (!area) return 'rgba(47,107,255,0.12)';
+                        var g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+                        g.addColorStop(0, 'rgba(47,107,255,0.28)');
+                        g.addColorStop(1, 'rgba(47,107,255,0.02)');
+                        return g;
+                    },
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 2.5,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#2f6bff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 11 }, maxRotation: 0 } },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Generation (MWh)', color: '#6b7280', font: { size: 11 } },
+                        grid: { color: '#eef1f6' },
+                        ticks: { color: '#6b7280', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    var unitCtx = document.getElementById('unitChart');
+    if (unitCtx && window.Chart) {
+        new Chart(unitCtx, {
+            type: 'line',
+            data: {
+                labels: unitLabels,
+                datasets: [
+                    {
+                        label: 'Unit 1',
+                        data: unit1,
+                        borderColor: '#ea580c',
+                        backgroundColor: 'rgba(234,88,12,0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2.2,
+                        pointRadius: 2
+                    },
+                    {
+                        label: 'Unit 2',
+                        data: unit2,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79,70,229,0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2.2,
+                        pointRadius: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', align: 'end', labels: { boxWidth: 10, usePointStyle: true } }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 11 }, maxRotation: 0 } },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Energy (MWh)', color: '#6b7280', font: { size: 11 } },
+                        grid: { color: '#eef1f6' },
+                        ticks: { color: '#6b7280', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    var faultCtx = document.getElementById('faultChart');
+    if (faultCtx && window.Chart) {
+        var hasFault = faultData.some(function (v) { return v > 0; });
+        new Chart(faultCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'Open / Major', 'Minor', 'Resolved'],
+                datasets: [{
+                    data: hasFault ? faultData : [1],
+                    backgroundColor: hasFault ? ['#ef4444', '#f97316', '#eab308', '#3b82f6'] : ['#e5e7eb'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: { legend: { display: false }, tooltip: { enabled: hasFault } }
+            }
+        });
+    }
+})();
 </script>
-
-
-
 @endsection

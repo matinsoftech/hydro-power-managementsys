@@ -233,6 +233,10 @@
         background: linear-gradient(90deg, var(--ie-gen-soft), #fff 55%);
     }
 
+    .ie-panel-head.generator {
+        background: linear-gradient(90deg, #e7f6ee, #fff 55%);
+    }
+
     .ie-panel-head h5 {
         margin: 0;
         font-weight: 600;
@@ -917,8 +921,8 @@
 
     <ul class="nav ie-tabs" id="ieTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link {{ request('tab', 'failure') !== 'generation' ? 'active' : '' }}" id="failure-tab" data-bs-toggle="tab" data-bs-target="#failurePane"
-                type="button" role="tab" aria-controls="failurePane" aria-selected="{{ request('tab', 'failure') !== 'generation' ? 'true' : 'false' }}">
+            <button class="nav-link {{ request('tab', 'failure') === 'failure' ? 'active' : '' }}" id="failure-tab" data-bs-toggle="tab" data-bs-target="#failurePane"
+                type="button" role="tab" aria-controls="failurePane" aria-selected="{{ request('tab', 'failure') === 'failure' ? 'true' : 'false' }}">
                 <span class="ie-tab-full">Failure Data</span>
                 <span class="ie-tab-short">Failure</span>
                 <span class="badge bg-warning text-dark">{{ $failureRows->total() }}</span>
@@ -932,11 +936,27 @@
                 <span class="badge bg-info text-dark">{{ $generationRows->total() }}</span>
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ request('tab') === 'generator' ? 'active' : '' }}" id="generator-tab" data-bs-toggle="tab" data-bs-target="#generatorPane"
+                type="button" role="tab" aria-controls="generatorPane" aria-selected="{{ request('tab') === 'generator' ? 'true' : 'false' }}">
+                <span class="ie-tab-full">Generator Meter Import</span>
+                <span class="ie-tab-short">Meter</span>
+                <span class="badge bg-success">{{ $generatorRows->total() }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {{ request('tab') === 'log' ? 'active' : '' }}" id="log-tab" data-bs-toggle="tab" data-bs-target="#logPane"
+                type="button" role="tab" aria-controls="logPane" aria-selected="{{ request('tab') === 'log' ? 'true' : 'false' }}">
+                <span class="ie-tab-full">Log Import</span>
+                <span class="ie-tab-short">Log</span>
+                <span class="badge bg-secondary">{{ $logRows->total() }}</span>
+            </button>
+        </li>
     </ul>
 
     <div class="tab-content" id="ieTabContent">
         {{-- Failure Data --}}
-        <div class="tab-pane fade {{ request('tab', 'failure') !== 'generation' ? 'show active' : '' }}" id="failurePane" role="tabpanel" aria-labelledby="failure-tab">
+        <div class="tab-pane fade {{ request('tab', 'failure') === 'failure' ? 'show active' : '' }}" id="failurePane" role="tabpanel" aria-labelledby="failure-tab">
             <div class="ie-panel">
                 <div class="ie-panel-head failure">
                     <div>
@@ -1658,6 +1678,300 @@
                 </div>
             </div>
         </div>
+
+        <div class="tab-pane fade {{ request('tab') === 'generator' ? 'show active' : '' }}" id="generatorPane" role="tabpanel" aria-labelledby="generator-tab">
+            <div class="ie-panel">
+                <div class="ie-panel-head generator">
+                    <div>
+                        <h5>Generator Meter Import</h5>
+                        <span class="hint">Generator 1 and Generator 2 — outage rows and the totals strip</span>
+                    </div>
+                    <div class="ie-actions">
+                        <a href="{{ route('admin.generator_log_template') }}" class="btn btn-sm btn-outline-secondary btn-ie-outline">
+                            <i class="fa fa-download me-1"></i>
+                            <span class="ie-btn-full">Download Template</span>
+                            <span class="ie-btn-short">Template</span>
+                        </a>
+                        <a href="{{ route('admin.export_generator_log', request()->only(['generator_unit', 'generator_start', 'generator_end'])) }}" class="btn btn-sm btn-ie-primary">
+                            <i class="fa fa-file-export me-1"></i> Export
+                        </a>
+                    </div>
+                </div>
+
+                <form id="generatorImportForm" action="{{ route('admin.import_generator_log') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="ie-dropzone" id="generatorDropzone" data-target="generatorFileInput">
+                        <i class="fa fa-cloud-arrow-up d-block"></i>
+                        <strong>Drop the generator meter Excel here, or click to browse</strong>
+                        <small>One sheet per BS day. Reads GENERATOR-1 and GENERATOR-2 only.</small>
+                        <div class="file-name" id="generatorFileName"></div>
+                        <input type="file" name="import_file" id="generatorFileInput" class="d-none" accept=".xlsx,.xls" required>
+                    </div>
+                    <div class="ie-toolbar">
+                        <button type="submit" class="btn btn-sm btn-ie-primary" id="generatorImportBtn" disabled>
+                            <i class="fa fa-upload me-1"></i> Import File
+                        </button>
+                    </div>
+                </form>
+
+                <form action="{{ route('admin.import_export') }}" method="GET" class="ie-toolbar">
+                    <input type="hidden" name="tab" value="generator">
+                    <div>
+                        <label class="form-label" for="generatorUnit">Generator</label>
+                        <select name="generator_unit" id="generatorUnit" class="form-select form-select-sm">
+                            <option value="">All generators</option>
+                            <option value="1" @selected(request('generator_unit') == '1')>Generator 1</option>
+                            <option value="2" @selected(request('generator_unit') == '2')>Generator 2</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="generatorLogStart">Start date (BS)</label>
+                        <input type="text" name="generator_start" id="generatorLogStart" class="form-control form-control-sm nepali-datepicker"
+                               placeholder="2083-05-01" value="{{ request('generator_start') }}" autocomplete="off" readonly>
+                    </div>
+                    <div>
+                        <label class="form-label" for="generatorLogEnd">End date (BS)</label>
+                        <input type="text" name="generator_end" id="generatorLogEnd" class="form-control form-control-sm nepali-datepicker"
+                               placeholder="2083-05-31" value="{{ request('generator_end') }}" autocomplete="off" readonly>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-ie-primary">Filter</button>
+                    <a href="{{ route('admin.import_export', ['tab' => 'generator']) }}" class="btn btn-sm btn-outline-secondary btn-ie-outline">Reset</a>
+                </form>
+
+                <div class="ie-table-wrap table-responsive">
+                    <table class="table table-hover table-bordered align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>BS Date</th>
+                                <th>Generator</th>
+                                <th>Running</th>
+                                <th>Outage</th>
+                                <th>Initial</th>
+                                <th>Final</th>
+                                <th>Generation</th>
+                                <th>Events</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($generatorRows as $row)
+                                <tr>
+                                    <td>{{ $row->date }}</td>
+                                    <td>Generator {{ $row->generator }}</td>
+                                    <td>{{ $row->total_running ?: '—' }}</td>
+                                    <td>{{ $row->total_outage ?: '—' }}</td>
+                                    <td>{{ $row->initial_reading === null ? '—' : number_format($row->initial_reading, 0) }}</td>
+                                    <td>{{ $row->final_reading === null ? '—' : number_format($row->final_reading, 0) }}</td>
+                                    <td>{{ $row->total_generation_kwh === null ? '—' : number_format($row->total_generation_kwh, 0) }}</td>
+                                    <td>{{ $row->outages_count }}</td>
+                                    <td>
+                                        <form action="{{ route('admin.generator_log.destroy', $row) }}" method="POST" onsubmit="return confirm('Delete this generator meter day and its outage rows?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">No generator meter rows yet. Upload a generator meter Excel file.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if($generatorRows->hasPages())
+                    <div class="p-3">{{ $generatorRows->links('pagination::bootstrap-5') }}</div>
+                @endif
+
+                <div class="p-3">
+                    <h6 class="mb-2">Import history</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>File</th>
+                                    <th>When</th>
+                                    <th>Saved</th>
+                                    <th>Duplicates</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($generatorImports as $batch)
+                                    <tr>
+                                        <td>{{ $batch->original_filename }}</td>
+                                        <td>{{ $batch->imported_at?->format('Y-m-d H:i') }}</td>
+                                        <td>{{ $batch->record_count }}</td>
+                                        <td>{{ $batch->duplicate_count ?? 0 }}</td>
+                                        <td>{{ $batch->isUndone() ? 'Undone' : 'Active' }}</td>
+                                        <td class="text-nowrap">
+                                            @if($batch->stored_path)
+                                                <a href="{{ route('admin.import_batch.download', $batch) }}" class="btn btn-sm btn-outline-secondary">File</a>
+                                            @endif
+                                            @if($batch->canUndo())
+                                                <form action="{{ route('admin.import_batch.undo', $batch) }}" method="POST" class="d-inline" onsubmit="return confirm('Undo this Generator Meter Import and remove its rows?');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Undo</button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="6" class="text-center text-muted py-3">No imports yet.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($generatorImports->hasPages())
+                        <div class="pt-3">{{ $generatorImports->links('pagination::bootstrap-5') }}</div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade {{ request('tab') === 'log' ? 'show active' : '' }}" id="logPane" role="tabpanel" aria-labelledby="log-tab">
+            <div class="ie-panel">
+                <div class="ie-panel-head" style="background:linear-gradient(90deg,#eef2ff,#fff 55%);">
+                    <div>
+                        <h5>Log Import</h5>
+                        <span class="hint">One monthly Excel — Unit 1, Unit 2, 11 kV panel &amp; meter reading</span>
+                    </div>
+                    <div class="ie-actions">
+                        <a href="{{ route('admin.plant_log_template') }}" class="btn btn-sm btn-outline-secondary btn-ie-outline">
+                            <i class="fa fa-download me-1"></i>
+                            <span class="ie-btn-full">Download Template</span>
+                            <span class="ie-btn-short">Template</span>
+                        </a>
+                        <a href="{{ route('admin.export_plant_log', request()->only(['log_unit', 'log_start', 'log_end'])) }}" class="btn btn-sm btn-ie-primary">
+                            <i class="fa fa-file-export me-1"></i> Export
+                        </a>
+                    </div>
+                </div>
+
+                <form id="logImportForm" action="{{ route('admin.import_plant_log') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="ie-dropzone" id="logDropzone" data-target="logFileInput">
+                        <i class="fa fa-cloud-arrow-up d-block"></i>
+                        <strong>Drop the monthly plant log Excel here, or click to browse</strong>
+                        <small>One sheet per BS day · UNIT-1 · UNIT-2 · 11 KV · METER READING</small>
+                        <div class="file-name" id="logFileName"></div>
+                        <input type="file" name="import_file" id="logFileInput" class="d-none" accept=".xlsx,.xls" required>
+                    </div>
+                    <div class="ie-toolbar">
+                        <button type="submit" class="btn btn-sm btn-ie-primary" id="logImportBtn" disabled>
+                            <i class="fa fa-upload me-1"></i> Import File
+                        </button>
+                    </div>
+                </form>
+
+                <form action="{{ route('admin.import_export') }}" method="GET" class="ie-toolbar">
+                    <input type="hidden" name="tab" value="log">
+                    <div>
+                        <label class="form-label" for="logStart">Start date (BS)</label>
+                        <input type="text" name="log_start" id="logStart" class="form-control form-control-sm nepali-datepicker"
+                               placeholder="2083-05-01" value="{{ request('log_start') }}" autocomplete="off" readonly>
+                    </div>
+                    <div>
+                        <label class="form-label" for="logEnd">End date (BS)</label>
+                        <input type="text" name="log_end" id="logEnd" class="form-control form-control-sm nepali-datepicker"
+                               placeholder="2083-05-31" value="{{ request('log_end') }}" autocomplete="off" readonly>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-ie-primary">Filter</button>
+                    <a href="{{ route('admin.import_export', ['tab' => 'log']) }}" class="btn btn-sm btn-outline-secondary btn-ie-outline">Reset</a>
+                </form>
+
+                <div class="ie-table-wrap table-responsive">
+                    <table class="table table-hover table-bordered align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>BS Date</th>
+                                <th>Unit 1 energy</th>
+                                <th>Unit 2 energy</th>
+                                <th>Unit 1 hrs</th>
+                                <th>Unit 2 hrs</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($logRows as $day)
+                                @php
+                                    $u1 = $day->unitDays->firstWhere('unit', 1);
+                                    $u2 = $day->unitDays->firstWhere('unit', 2);
+                                @endphp
+                                <tr>
+                                    <td>{{ $day->date }}</td>
+                                    <td>{{ $u1 && $u1->energy_kwh !== null ? number_format($u1->energy_kwh, 0) : '—' }}</td>
+                                    <td>{{ $u2 && $u2->energy_kwh !== null ? number_format($u2->energy_kwh, 0) : '—' }}</td>
+                                    <td>{{ $u1->hour_count ?? '—' }}</td>
+                                    <td>{{ $u2->hour_count ?? '—' }}</td>
+                                    <td>
+                                        <form action="{{ route('admin.plant_log.destroy', $day) }}" method="POST" onsubmit="return confirm('Delete this log day and all its unit/line/meter rows?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">No log days yet. Upload the monthly plant log Excel.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if($logRows->hasPages())
+                    <div class="p-3">{{ $logRows->links('pagination::bootstrap-5') }}</div>
+                @endif
+
+                <div class="p-3">
+                    <h6 class="mb-2">Import history</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>File</th>
+                                    <th>When</th>
+                                    <th>Saved</th>
+                                    <th>Duplicates</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($logImports as $batch)
+                                    <tr>
+                                        <td>{{ $batch->original_filename }}</td>
+                                        <td>{{ $batch->imported_at?->format('Y-m-d H:i') }}</td>
+                                        <td>{{ $batch->record_count }}</td>
+                                        <td>{{ $batch->duplicate_count ?? 0 }}</td>
+                                        <td>{{ $batch->isUndone() ? 'Undone' : 'Active' }}</td>
+                                        <td class="text-nowrap">
+                                            @if($batch->stored_path)
+                                                <a href="{{ route('admin.import_batch.download', $batch) }}" class="btn btn-sm btn-outline-secondary">File</a>
+                                            @endif
+                                            @if($batch->canUndo())
+                                                <form action="{{ route('admin.import_batch.undo', $batch) }}" method="POST" class="d-inline" onsubmit="return confirm('Undo this Log Import?');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Undo</button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="6" class="text-center text-muted py-3">No imports yet.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($logImports->hasPages())
+                        <div class="pt-3">{{ $logImports->links('pagination::bootstrap-5') }}</div>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1689,7 +2003,7 @@
         });
 
         if (window.NepaliDatePicker && typeof NepaliDatePicker.attach === 'function') {
-            ['#failureStart', '#failureEnd', '#generationStart', '#generationEnd'].forEach(function (selector) {
+            ['#failureStart', '#failureEnd', '#generationStart', '#generationEnd', '#generatorLogStart', '#generatorLogEnd', '#logStart', '#logEnd'].forEach(function (selector) {
                 var el = document.querySelector(selector);
                 if (!el) return;
                 NepaliDatePicker.attach(selector, {
@@ -1965,6 +2279,36 @@
             redirect: '{{ route('admin.import_export', ['tab' => 'generation']) }}',
             accent: '#0aa1aa',
             generation: true,
+        });
+
+        bindImportForm({
+            formId: 'generatorImportForm',
+            dropzoneId: 'generatorDropzone',
+            fileInputId: 'generatorFileInput',
+            fileNameId: 'generatorFileName',
+            importBtnId: 'generatorImportBtn',
+            noFileText: 'Please choose a Generator Meter Import Excel file first.',
+            modalTitle: 'Generator Meter Import…',
+            modalSubtitle: 'Please wait while we read Generator 1 and Generator 2.',
+            invalidFileHint: 'Please try again with a Generator Meter Import Excel file.',
+            redirect: '{{ route('admin.import_export', ['tab' => 'generator']) }}',
+            accent: '#1b7a45',
+            generation: false,
+        });
+
+        bindImportForm({
+            formId: 'logImportForm',
+            dropzoneId: 'logDropzone',
+            fileInputId: 'logFileInput',
+            fileNameId: 'logFileName',
+            importBtnId: 'logImportBtn',
+            noFileText: 'Please choose a Log Import Excel file first.',
+            modalTitle: 'Log Import…',
+            modalSubtitle: 'Reading Unit 1, Unit 2, 11 kV and meters.',
+            invalidFileHint: 'Please try again with the monthly plant log Excel.',
+            redirect: '{{ route('admin.import_export', ['tab' => 'log']) }}',
+            accent: '#4338ca',
+            generation: false,
         });
     })();
 </script>

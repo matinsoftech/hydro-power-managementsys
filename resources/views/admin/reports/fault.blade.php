@@ -186,6 +186,31 @@
         background: #fff;
         cursor: pointer;
     }
+    .fr-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: .75rem;
+    }
+    .fr-preset {
+        border: 1px solid var(--fr-border);
+        background: #fff;
+        color: var(--fr-text);
+        border-radius: 999px;
+        padding: .28rem .7rem;
+        font-size: .75rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    .fr-preset:hover {
+        border-color: var(--fr-accent);
+        color: #087880;
+    }
+    .fr-preset.active {
+        background: var(--fr-accent);
+        border-color: var(--fr-accent);
+        color: #fff;
+    }
     .ndp-container, .ndp-popup, [class*="nepali-date"] {
         z-index: 1080 !important;
     }
@@ -238,7 +263,15 @@
         </div>
     </div>
 
-    <form method="GET" action="{{ route('admin.reports.fault') }}" class="fr-filters">
+    <form method="GET" action="{{ route('admin.reports.fault') }}" class="fr-filters" id="failureFilterForm">
+        <div class="fr-presets" role="group" aria-label="Quick date range">
+            <button type="button" class="fr-preset" data-range="today" title="Today in the Nepali calendar">Today</button>
+            <button type="button" class="fr-preset" data-range="yesterday" title="Yesterday in the Nepali calendar">Yesterday</button>
+            <button type="button" class="fr-preset" data-range="this_week" title="This week, Sunday through today (BS)">This week</button>
+            <button type="button" class="fr-preset" data-range="last_week" title="Last week, Sunday through Saturday (BS)">Last week</button>
+            <button type="button" class="fr-preset" data-range="last_month" title="The full previous Nepali month">Last month</button>
+            <button type="button" class="fr-preset" data-range="this_month" title="This Nepali month, from the 1st through today">This month</button>
+        </div>
         <div class="row g-2 align-items-end">
             <div class="col-md-2">
                 <label class="form-label small text-muted mb-1">
@@ -754,6 +787,65 @@
             });
         });
     }
+
+    (function setupRangePresets() {
+        var ND = window.NepaliDatePicker && NepaliDatePicker.NepaliDate;
+        var form = document.getElementById('failureFilterForm');
+        var startEl = document.getElementById('failureStartBs');
+        var endEl = document.getElementById('failureEndBs');
+        if (!ND || typeof ND.today !== 'function' || !form || !startEl || !endEl) {
+            return;
+        }
+
+        function ymd(date) {
+            if (date && typeof date.format === 'function') {
+                return date.format('YYYY-MM-DD');
+            }
+            var month = date.getMonth();
+            var day = date.getDate();
+            return date.getYear() + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        }
+
+        function copy(date) {
+            if (typeof ND.parse === 'function') {
+                return ND.parse(ymd(date), 'YYYY-MM-DD');
+            }
+            return date;
+        }
+
+        function shift(date, days) {
+            return copy(date).add(days, 'day');
+        }
+
+        function boundsFor(key, today) {
+            var weekStart = shift(today, -today.getDay());
+            var monthStart = shift(today, 1 - today.getDate());
+            var prevMonthEnd = shift(monthStart, -1);
+            if (key === 'today') return [today, today];
+            if (key === 'yesterday') return [shift(today, -1), shift(today, -1)];
+            if (key === 'this_week') return [weekStart, today];
+            if (key === 'last_week') return [shift(weekStart, -7), shift(weekStart, -1)];
+            if (key === 'this_month') return [monthStart, today];
+            if (key === 'last_month') return [shift(prevMonthEnd, 1 - prevMonthEnd.getDate()), prevMonthEnd];
+            return null;
+        }
+
+        var today = ND.today();
+        document.querySelectorAll('#failureFilterForm .fr-preset[data-range]').forEach(function (button) {
+            var bounds = boundsFor(button.getAttribute('data-range'), today);
+            if (!bounds) return;
+            var start = ymd(bounds[0]);
+            var end = ymd(bounds[1]);
+            if (startEl.value === start && endEl.value === end) {
+                button.classList.add('active');
+            }
+            button.addEventListener('click', function () {
+                startEl.value = start;
+                endEl.value = end;
+                form.submit();
+            });
+        });
+    })();
 
     // Info tooltips on KPI cards / filters / table headers
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('.fr-info-btn'));
