@@ -1684,7 +1684,7 @@
                 <div class="ie-panel-head generator">
                     <div>
                         <h5>Generator Meter Import</h5>
-                        <span class="hint">Generator 1 and Generator 2 — outage rows and the totals strip</span>
+                        <span class="hint">Monthly Excel — DATE, UNIT-1 &amp; UNIT-2 initial / final / total generation</span>
                     </div>
                     <div class="ie-actions">
                         <a href="{{ route('admin.generator_log_template') }}" class="btn btn-sm btn-outline-secondary btn-ie-outline">
@@ -1703,7 +1703,7 @@
                     <div class="ie-dropzone" id="generatorDropzone" data-target="generatorFileInput">
                         <i class="fa fa-cloud-arrow-up d-block"></i>
                         <strong>Drop the generator meter Excel here, or click to browse</strong>
-                        <small>One sheet per BS day. Reads GENERATOR-1 and GENERATOR-2 only.</small>
+                        <small>One monthly sheet · DATE · UNIT-1 · UNIT-2 · Initial / Final / Total Generation (kWh)</small>
                         <div class="file-name" id="generatorFileName"></div>
                         <input type="file" name="import_file" id="generatorFileInput" class="d-none" accept=".xlsx,.xls" required>
                     </div>
@@ -1717,22 +1717,22 @@
                 <form action="{{ route('admin.import_export') }}" method="GET" class="ie-toolbar">
                     <input type="hidden" name="tab" value="generator">
                     <div>
-                        <label class="form-label" for="generatorUnit">Generator</label>
+                        <label class="form-label" for="generatorUnit">Unit</label>
                         <select name="generator_unit" id="generatorUnit" class="form-select form-select-sm">
-                            <option value="">All generators</option>
-                            <option value="1" @selected(request('generator_unit') == '1')>Generator 1</option>
-                            <option value="2" @selected(request('generator_unit') == '2')>Generator 2</option>
+                            <option value="">All units</option>
+                            <option value="1" @selected(request('generator_unit') == '1')>Unit 1</option>
+                            <option value="2" @selected(request('generator_unit') == '2')>Unit 2</option>
                         </select>
                     </div>
                     <div>
                         <label class="form-label" for="generatorLogStart">Start date (BS)</label>
                         <input type="text" name="generator_start" id="generatorLogStart" class="form-control form-control-sm nepali-datepicker"
-                               placeholder="2083-05-01" value="{{ request('generator_start') }}" autocomplete="off" readonly>
+                               placeholder="2083-06-01" value="{{ request('generator_start') }}" autocomplete="off" readonly>
                     </div>
                     <div>
                         <label class="form-label" for="generatorLogEnd">End date (BS)</label>
                         <input type="text" name="generator_end" id="generatorLogEnd" class="form-control form-control-sm nepali-datepicker"
-                               placeholder="2083-05-31" value="{{ request('generator_end') }}" autocomplete="off" readonly>
+                               placeholder="2083-06-30" value="{{ request('generator_end') }}" autocomplete="off" readonly>
                     </div>
                     <button type="submit" class="btn btn-sm btn-ie-primary">Filter</button>
                     <a href="{{ route('admin.import_export', ['tab' => 'generator']) }}" class="btn btn-sm btn-outline-secondary btn-ie-outline">Reset</a>
@@ -1743,13 +1743,10 @@
                         <thead>
                             <tr>
                                 <th>BS Date</th>
-                                <th>Generator</th>
-                                <th>Running</th>
-                                <th>Outage</th>
+                                <th>Unit</th>
                                 <th>Initial</th>
                                 <th>Final</th>
-                                <th>Generation</th>
-                                <th>Events</th>
+                                <th>Generation (kWh)</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -1757,15 +1754,12 @@
                             @forelse($generatorRows as $row)
                                 <tr>
                                     <td>{{ $row->date }}</td>
-                                    <td>Generator {{ $row->generator }}</td>
-                                    <td>{{ $row->total_running ?: '—' }}</td>
-                                    <td>{{ $row->total_outage ?: '—' }}</td>
+                                    <td>Unit {{ $row->generator }}</td>
                                     <td>{{ $row->initial_reading === null ? '—' : number_format($row->initial_reading, 0) }}</td>
                                     <td>{{ $row->final_reading === null ? '—' : number_format($row->final_reading, 0) }}</td>
                                     <td>{{ $row->total_generation_kwh === null ? '—' : number_format($row->total_generation_kwh, 0) }}</td>
-                                    <td>{{ $row->outages_count }}</td>
                                     <td>
-                                        <form action="{{ route('admin.generator_log.destroy', $row) }}" method="POST" onsubmit="return confirm('Delete this generator meter day and its outage rows?');">
+                                        <form action="{{ route('admin.generator_log.destroy', $row) }}" method="POST" onsubmit="return confirm('Delete this Unit meter day?');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
@@ -1774,7 +1768,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">No generator meter rows yet. Upload a generator meter Excel file.</td>
+                                    <td colspan="6" class="text-center text-muted py-4">No generator meter rows yet. Upload the monthly Unit 1 / Unit 2 Excel.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -2289,8 +2283,8 @@
             importBtnId: 'generatorImportBtn',
             noFileText: 'Please choose a Generator Meter Import Excel file first.',
             modalTitle: 'Generator Meter Import…',
-            modalSubtitle: 'Please wait while we read Generator 1 and Generator 2.',
-            invalidFileHint: 'Please try again with a Generator Meter Import Excel file.',
+            modalSubtitle: 'Reading monthly Unit 1 / Unit 2 meter readings.',
+            invalidFileHint: 'Please try again with the Unit 1 / Unit 2 Generator Meter Excel.',
             redirect: '{{ route('admin.import_export', ['tab' => 'generator']) }}',
             accent: '#1b7a45',
             generation: false,

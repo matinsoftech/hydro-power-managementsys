@@ -15,7 +15,7 @@ class GeneratorLogReportController extends Controller
     public function index(Request $request, GeneratorLogReportService $reportService)
     {
         $filters = [
-            'generator' => $request->input('generator'),
+            'unit' => $request->input('unit', $request->input('generator')),
             'start' => $request->input('start'),
             'end' => $request->input('end'),
         ];
@@ -33,66 +33,40 @@ class GeneratorLogReportController extends Controller
     public function export(Request $request, GeneratorLogReportService $reportService): StreamedResponse
     {
         $filters = [
-            'generator' => $request->input('generator'),
+            'unit' => $request->input('unit', $request->input('generator')),
             'start' => $request->input('start'),
             'end' => $request->input('end'),
         ];
 
         $report = $reportService->build($filters);
         $spreadsheet = new Spreadsheet();
-        $summary = $spreadsheet->getActiveSheet();
-        $summary->setTitle('Summary');
-        $k = $report['kpis'];
-        $summary->fromArray([
-            ['Metric', 'Value'],
-            ['Days', $k['days']],
-            ['Outage events', $k['events']],
-            ['Event outage (hrs)', $k['outage']],
-            ['Total running (hrs)', $k['running']],
-            ['Total generation (kWh)', $k['generation_kwh']],
-            ['Generator 1 events', $k['generators'][1]['events']],
-            ['Generator 1 outage', $k['generators'][1]['outage']],
-            ['Generator 1 generation (kWh)', $k['generators'][1]['generation_kwh']],
-            ['Generator 2 events', $k['generators'][2]['events']],
-            ['Generator 2 outage', $k['generators'][2]['outage']],
-            ['Generator 2 generation (kWh)', $k['generators'][2]['generation_kwh']],
-            ['Filter generator', $filters['generator'] ? 'Generator ' . $filters['generator'] : 'All'],
-            ['Filter start', $filters['start'] ?: '—'],
-            ['Filter end', $filters['end'] ?: '—'],
-        ]);
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Generator meter');
 
-        $daily = $spreadsheet->createSheet();
-        $daily->setTitle('Daily');
-        $daily->fromArray([['BS Date', 'Generator', 'Total Running', 'Total Outage', 'Initial', 'Final', 'Total Generation (kWh)']], null, 'A1');
-        $row = 2;
-        foreach ($report['tables']['days'] as $day) {
-            $daily->fromArray([[
-                $day->date,
-                'Generator ' . $day->generator,
-                $day->total_running,
-                $day->total_outage,
-                $day->initial_reading,
-                $day->final_reading,
-                $day->total_generation_kwh,
-            ]], null, 'A' . $row);
-            $row++;
-        }
+        $month = ($report['date_min'] && $report['date_max'])
+            ? substr((string) $report['date_min'], 0, 7)
+            : '';
+        $sheet->setCellValue('A1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT' . ($month ? '(' . $month . ')' : ''));
+        $sheet->setCellValue('A3', 'DATE');
+        $sheet->setCellValue('B3', 'UNIT-1');
+        $sheet->setCellValue('J3', 'UNIT-2');
+        $sheet->fromArray(['INITIAL READING', null, 'FINAL READING', null, 'TOTAL GENERATION (KWH)'], null, 'B4');
+        $sheet->fromArray(['INITIAL READING', null, 'FINAL READING', null, 'TOTAL GENERATION (KWH)'], null, 'J4');
 
-        $events = $spreadsheet->createSheet();
-        $events->setTitle('Outages');
-        $events->fromArray([['BS Date', 'Generator', 'S.No', 'To', 'Resume', 'Synch', 'Total Outage', 'Reason']], null, 'A1');
-        $row = 2;
-        foreach ($report['tables']['events'] as $event) {
-            $events->fromArray([[
-                $event->date,
-                'Generator ' . $event->generator,
-                $event->serial,
-                $event->trip_to,
-                $event->resume_hrs,
-                $event->synch_hrs,
-                $event->outage_hrs,
-                $event->reason,
-            ]], null, 'A' . $row);
+        $unit = $filters['unit'] ?? null;
+        $row = 5;
+        foreach ($report['tables']['combined'] as $day) {
+            $sheet->setCellValue('A' . $row, $day['date']);
+            if ($unit === null || (string) $unit === '1') {
+                $sheet->setCellValue('B' . $row, $day['u1_initial']);
+                $sheet->setCellValue('D' . $row, $day['u1_final']);
+                $sheet->setCellValue('F' . $row, $day['u1_generation']);
+            }
+            if ($unit === null || (string) $unit === '2') {
+                $sheet->setCellValue('J' . $row, $day['u2_initial']);
+                $sheet->setCellValue('L' . $row, $day['u2_final']);
+                $sheet->setCellValue('N' . $row, $day['u2_generation']);
+            }
             $row++;
         }
 

@@ -40,7 +40,7 @@ class GeneratorDailyLog extends Model
 
     public function getGeneratorLabelAttribute(): string
     {
-        return 'Generator ' . $this->generator;
+        return 'Unit ' . $this->generator;
     }
 
     public function fingerprint(): string

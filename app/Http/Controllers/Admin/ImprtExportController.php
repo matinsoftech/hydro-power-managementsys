@@ -892,20 +892,14 @@ class ImprtExportController extends Controller
             );
 
             $existingDays = GeneratorDailyLog::query()
-                ->get(['generator', 'date', 'total_running', 'total_outage', 'initial_reading', 'final_reading', 'total_generation_kwh'])
-                ->mapWithKeys(fn (GeneratorDailyLog $row) => [$row->fingerprint() => $row->id])
-                ->all();
-
-            $existingEvents = GeneratorOutage::query()
-                ->get(['generator', 'date', 'serial', 'trip_to', 'resume_hrs', 'synch_hrs', 'outage_hrs', 'reason'])
-                ->map(fn (GeneratorOutage $row) => GeneratorOutage::fingerprintFromArray($row->toArray()))
-                ->flip()
+                ->get(['generator', 'date'])
+                ->mapWithKeys(fn (GeneratorDailyLog $row) => [$row->generator . '|' . $row->date => true])
                 ->all();
 
             $newDays = [];
             $duplicateDays = 0;
             foreach ($parsed['days'] as $day) {
-                $key = GeneratorDailyLog::fingerprintFromArray($day);
+                $key = $day['generator'] . '|' . $day['date'];
                 if (isset($existingDays[$key])) {
                     $duplicateDays++;
                     continue;
@@ -914,20 +908,7 @@ class ImprtExportController extends Controller
                 $newDays[] = $day;
             }
 
-            $newEvents = [];
-            $duplicateEvents = 0;
-            foreach ($parsed['events'] as $event) {
-                $key = GeneratorOutage::fingerprintFromArray($event);
-                if (isset($existingEvents[$key])) {
-                    $duplicateEvents++;
-                    continue;
-                }
-                $existingEvents[$key] = true;
-                $newEvents[] = $event;
-            }
-
-            $insertedCount = count($newDays) + count($newEvents);
-            $duplicateCount = $duplicateDays + $duplicateEvents;
+            $insertedCount = count($newDays);
             $skipped = (int) ($parsed['skipped'] ?? 0);
             $elapsedSeconds = round(microtime(true) - $startedAt, 1);
 
@@ -941,8 +922,8 @@ class ImprtExportController extends Controller
                     'title' => 'Nothing New to Import',
                     'message' => 'No new Generator Meter Import records were saved.',
                     'details' => array_values(array_filter([
-                        $duplicateCount > 0 ? "{$duplicateCount} row(s) were already in the database." : null,
-                        $skipped > 0 ? "{$skipped} sheet(s) had no generator block and were skipped." : null,
+                        $duplicateDays > 0 ? "{$duplicateDays} Unit day(s) were already in the database." : null,
+                        $skipped > 0 ? "{$skipped} sheet(s) were skipped." : null,
                         "Time taken: {$elapsedSeconds} second(s).",
                     ])),
                 ];
@@ -952,45 +933,33 @@ class ImprtExportController extends Controller
                     : redirect()->route('admin.import_export', ['tab' => 'generator'])->with('error', $payload['message']);
             }
 
-            DB::transaction(function () use ($parsed, $originalName, $storedPath, $newDays, $newEvents, $insertedCount, $skipped, $duplicateCount) {
+            DB::transaction(function () use ($parsed, $originalName, $storedPath, $newDays, $insertedCount, $skipped, $duplicateDays) {
                 $batch = ImportBatch::create([
                     'type' => ImportBatch::TYPE_GENERATOR,
                     'original_filename' => $originalName,
                     'stored_path' => $storedPath,
                     'record_count' => $insertedCount,
                     'skipped_count' => $skipped,
-                    'duplicate_count' => $duplicateCount,
+                    'duplicate_count' => $duplicateDays,
                     'imported_by' => Auth::id(),
                     'imported_at' => now(),
                     'notes' => $parsed['month_label'] ?? null,
                 ]);
 
-                $dayIds = GeneratorDailyLog::query()
-                    ->get(['id', 'generator', 'date'])
-                    ->mapWithKeys(fn (GeneratorDailyLog $row) => [$row->generator . '|' . $row->date => $row->id])
-                    ->all();
-
                 foreach ($newDays as $day) {
                     $day['import_batch_id'] = $batch->id;
-                    $created = GeneratorDailyLog::create($day);
-                    $dayIds[$created->generator . '|' . $created->date] = $created->id;
-                }
-
-                foreach ($newEvents as $event) {
-                    $event['import_batch_id'] = $batch->id;
-                    $event['generator_daily_log_id'] = $dayIds[$event['generator'] . '|' . $event['date']] ?? null;
-                    GeneratorOutage::create($event);
+                    GeneratorDailyLog::create($day);
                 }
             });
 
             $details = [
-                count($newDays) . ' daily total row(s) and ' . count($newEvents) . ' outage row(s) were saved by Generator Meter Import from "' . $originalName . '".',
+                count($newDays) . ' Unit daily reading row(s) were saved by Generator Meter Import from "' . $originalName . '".',
             ];
-            if ($duplicateCount > 0) {
-                $details[] = "{$duplicateCount} duplicate row(s) were skipped.";
+            if ($duplicateDays > 0) {
+                $details[] = "{$duplicateDays} existing Unit day(s) were skipped.";
             }
             if ($skipped > 0) {
-                $details[] = "{$skipped} sheet(s) without a generator block were skipped.";
+                $details[] = "{$skipped} sheet(s) were skipped.";
             }
             foreach (array_slice($parsed['warnings'] ?? [], 0, 8) as $warning) {
                 $details[] = $warning;
@@ -1055,35 +1024,25 @@ class ImprtExportController extends Controller
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('2083-05-01');
+        $sheet->setTitle('Sheet1');
 
-        $sheet->setCellValue('A1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT');
-        $sheet->setCellValue('A2', 'DATE:01/05/2083');
+        $sheet->setCellValue('A1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT(2083-06)');
+        $sheet->setCellValue('A3', 'DATE');
+        $sheet->setCellValue('B3', 'UNIT-1');
+        $sheet->setCellValue('J3', 'UNIT-2');
+        $sheet->setCellValue('B4', 'INITIAL READING');
+        $sheet->setCellValue('D4', 'FINAL READING');
+        $sheet->setCellValue('F4', 'TOTAL GENERATION (KWH)');
+        $sheet->setCellValue('J4', 'INITIAL READING');
+        $sheet->setCellValue('L4', 'FINAL READING');
+        $sheet->setCellValue('N4', 'TOTAL GENERATION (KWH)');
 
-        $this->writeGeneratorLogBlock($sheet, 1, 4, [
-            'to' => '21:12:00',
-            'resume' => '21:16:00',
-            'synch' => '21:27:00',
-            'outage' => '0:15:00',
-            'reason' => 'Machine trip due to NEA grid gone',
-            'running' => '23:45:00',
-            'total_outage' => '0:15:00',
-            'initial' => 1000,
-            'final' => 12450,
-        ]);
-        $this->writeGeneratorLogBlock($sheet, 17, 4, [
-            'to' => '21:12:00',
-            'resume' => '21:16:00',
-            'synch' => '21:22:00',
-            'outage' => '0:10:00',
-            'reason' => 'Machine trip due to NEA grid gone',
-            'running' => '23:50:00',
-            'total_outage' => '0:10:00',
-            'initial' => 2000,
-            'final' => 11880,
-        ]);
+        $sheet->fromArray(['6/1/2083', 8133001, null, 8144147, null, 11146], null, 'A5');
+        $sheet->fromArray([940143, null, 951491, null, 11348], null, 'J5');
+        $sheet->fromArray(['6/2/2083', 8144147, null, 8155966, null, 11819], null, 'A6');
+        $sheet->fromArray([951491, null, 963554, null, 12063], null, 'J6');
 
-        foreach ([1, 2, 3, 4, 5, 6, 8, 10, 12, 17, 18, 19, 20, 21, 22, 24, 26, 28] as $col) {
+        foreach (range(1, 16) as $col) {
             $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
         }
 
@@ -1094,96 +1053,47 @@ class ImprtExportController extends Controller
         ]);
     }
 
-    /**
-     * @param  array{to: string, resume: string, synch: string, outage: string, reason: string, running: string, total_outage: string, initial: float|int, final: float|int}  $sample
-     */
-    private function writeGeneratorLogBlock($sheet, int $startCol, int $titleRow, array $sample): void
-    {
-        $generator = $startCol === 1 ? 1 : 2;
-        $sheet->setCellValue([$startCol, $titleRow], 'GENERATOR-' . $generator);
-        $headers = ['S.NO.', 'TO', 'RESUME', 'SYNCH', 'TOTAL OUTAGE', 'REASON'];
-        foreach ($headers as $i => $header) {
-            $sheet->setCellValue([$startCol + $i, $titleRow + 1], $header);
-        }
-
-        $sheet->setCellValue([$startCol, $titleRow + 2], 1);
-        $sheet->setCellValue([$startCol + 1, $titleRow + 2], $sample['to']);
-        $sheet->setCellValue([$startCol + 2, $titleRow + 2], $sample['resume']);
-        $sheet->setCellValue([$startCol + 3, $titleRow + 2], $sample['synch']);
-        $sheet->setCellValue([$startCol + 4, $titleRow + 2], $sample['outage']);
-        $sheet->setCellValue([$startCol + 5, $titleRow + 2], $sample['reason']);
-
-        for ($serial = 2; $serial <= 6; $serial++) {
-            $sheet->setCellValue([$startCol, $titleRow + 1 + $serial], $serial);
-            $sheet->setCellValue([$startCol + 4, $titleRow + 1 + $serial], '0:00:00');
-        }
-
-        $labelRow = $titleRow + 9;
-        $valueRow = $labelRow + 1;
-        $sheet->setCellValue([$startCol, $labelRow], 'TOTAL RUNNING (HRS)');
-        $sheet->setCellValue([$startCol + 2, $labelRow], 'TOTAL OUTAGE (HRS)');
-        $sheet->setCellValue([$startCol + 7, $labelRow], 'INITIAL READING');
-        $sheet->setCellValue([$startCol + 9, $labelRow], 'FINAL READING');
-        $sheet->setCellValue([$startCol + 11, $labelRow], 'TOTAL GENERATION (KWH)');
-        $sheet->setCellValue([$startCol, $valueRow], $sample['running']);
-        $sheet->setCellValue([$startCol + 2, $valueRow], $sample['total_outage']);
-        $sheet->setCellValue([$startCol + 7, $valueRow], $sample['initial']);
-        $sheet->setCellValue([$startCol + 9, $valueRow], $sample['final']);
-        $sheet->setCellValue([$startCol + 11, $valueRow], $sample['final'] - $sample['initial']);
-    }
-
     public function exportGeneratorLog(Request $request): StreamedResponse
     {
         $days = GeneratorDailyLog::query()->orderBy('date')->orderBy('generator');
-        $events = GeneratorOutage::query()->orderBy('date')->orderBy('generator')->orderBy('serial');
 
         if ($request->filled('generator_unit')) {
             $days->where('generator', (int) $request->input('generator_unit'));
-            $events->where('generator', (int) $request->input('generator_unit'));
         }
         if ($request->filled('generator_start')) {
             $days->where('date', '>=', $request->input('generator_start'));
-            $events->where('date', '>=', $request->input('generator_start'));
         }
         if ($request->filled('generator_end')) {
             $days->where('date', '<=', $request->input('generator_end'));
-            $events->where('date', '<=', $request->input('generator_end'));
         }
 
+        $rows = $days->get()->groupBy('date');
         $spreadsheet = new Spreadsheet();
-        $daily = $spreadsheet->getActiveSheet();
-        $daily->setTitle('Daily totals');
-        $daily->fromArray([['BS Date', 'Generator', 'Total Running', 'Total Outage', 'Initial', 'Final', 'Total Generation (kWh)']], null, 'A1');
-        $row = 2;
-        foreach ($days->get() as $day) {
-            $daily->fromArray([[
-                $day->date,
-                'Generator ' . $day->generator,
-                $day->total_running,
-                $day->total_outage,
-                $day->initial_reading,
-                $day->final_reading,
-                $day->total_generation_kwh,
-            ]], null, 'A' . $row);
-            $row++;
-        }
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Unit readings');
+        $sheet->setCellValue('A1', 'SAITIKHOLA SMALL HYDROPOWER PROJECT');
+        $sheet->setCellValue('A3', 'DATE');
+        $sheet->setCellValue('B3', 'UNIT-1');
+        $sheet->setCellValue('J3', 'UNIT-2');
+        $sheet->fromArray(['INITIAL READING', null, 'FINAL READING', null, 'TOTAL GENERATION (KWH)'], null, 'B4');
+        $sheet->fromArray(['INITIAL READING', null, 'FINAL READING', null, 'TOTAL GENERATION (KWH)'], null, 'J4');
 
-        $outages = $spreadsheet->createSheet();
-        $outages->setTitle('Outages');
-        $outages->fromArray([['BS Date', 'Generator', 'S.No', 'To', 'Resume', 'Synch', 'Total Outage', 'Reason']], null, 'A1');
-        $row = 2;
-        foreach ($events->get() as $event) {
-            $outages->fromArray([[
-                $event->date,
-                'Generator ' . $event->generator,
-                $event->serial,
-                $event->trip_to,
-                $event->resume_hrs,
-                $event->synch_hrs,
-                $event->outage_hrs,
-                $event->reason,
-            ]], null, 'A' . $row);
-            $row++;
+        $r = 5;
+        foreach ($rows as $date => $dayRows) {
+            $u1 = $dayRows->firstWhere('generator', 1);
+            $u2 = $dayRows->firstWhere('generator', 2);
+            $sheet->setCellValue('A' . $r, $date);
+            if ($u1) {
+                $sheet->setCellValue('B' . $r, $u1->initial_reading);
+                $sheet->setCellValue('D' . $r, $u1->final_reading);
+                $sheet->setCellValue('F' . $r, $u1->total_generation_kwh);
+            }
+            if ($u2) {
+                $sheet->setCellValue('J' . $r, $u2->initial_reading);
+                $sheet->setCellValue('L' . $r, $u2->final_reading);
+                $sheet->setCellValue('N' . $r, $u2->total_generation_kwh);
+            }
+            $r++;
         }
 
         return response()->streamDownload(function () use ($spreadsheet) {

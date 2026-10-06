@@ -12,9 +12,8 @@ use Throwable;
 class GeneratorLogImportService
 {
     /**
-     * Parse a monthly generator log sheet.
-     * Each day sheet has Generator 1 and Generator 2 blocks at the bottom,
-     * plus the totals row (running, outage, initial, final, generation).
+     * Parse a monthly generator-meter workbook in the Unit 1 / Unit 2 reading format:
+     * DATE | UNIT-1 (Initial, Final, Total Generation) | UNIT-2 (Initial, Final, Total Generation)
      *
      * @return array{
      *   days: array<int, array<string, mixed>>,
@@ -42,7 +41,7 @@ class GeneratorLogImportService
             $spreadsheet = IOFactory::load($filePath);
         } catch (ReaderException $e) {
             throw new GeneratorLogImportException(
-                'Could not open the spreadsheet. Use a valid .xlsx / .xls Generator Meter Import file.',
+                'Could not open the spreadsheet. Use a valid Generator Meter Excel (Unit 1 / Unit 2 monthly format).',
                 [$e->getMessage()],
                 0,
                 $e
@@ -57,231 +56,247 @@ class GeneratorLogImportService
         }
 
         $days = [];
-        $events = [];
         $warnings = [];
         $skipped = 0;
         $company = null;
-        $dates = [];
+        $monthLabel = null;
+        $seen = [];
 
         foreach ($spreadsheet->getAllSheets() as $sheet) {
-            $blocks = $this->findGeneratorBlocks($sheet);
-            if (!isset($blocks[1]) && !isset($blocks[2])) {
+            $title = trim($sheet->getTitle());
+            if (preg_match('/^sheet\s*[23]$/i', $title)) {
                 $skipped++;
-                $warnings[] = 'Sheet "' . $sheet->getTitle() . '" skipped — no Generator 1 or Generator 2 block.';
                 continue;
             }
 
-            $date = $this->sheetDate($sheet);
-            if ($date === null) {
-                throw new GeneratorLogImportException(
-                    'Could not read the BS date for sheet "' . $sheet->getTitle() . '".',
-                    ['Name the sheet YYYY-MM-DD (e.g. 2083-05-01), or put DATE:DD/MM/YYYY in cell A2.']
-                );
+            $layout = $this->detectLayout($sheet);
+            if ($layout === null) {
+                $skipped++;
+                $warnings[] = 'Sheet "' . $title . '" skipped — Unit 1 / Unit 2 monthly headers not found.';
+                continue;
             }
 
-            $dates[] = $date;
             $sheetCompany = $this->text($sheet, 1, 1);
             if ($company === null && $sheetCompany) {
                 $company = $sheetCompany;
             }
+            if ($monthLabel === null) {
+                $monthLabel = $this->monthFromTitle($sheetCompany) ?: $this->monthFromTitle($title);
+            }
 
-            foreach ([1, 2] as $generator) {
-                if (!isset($blocks[$generator])) {
-                    $warnings[] = "Sheet {$date}: Generator {$generator} block was not found.";
+            $rowCount = 0;
+            $highest = min(200, (int) $sheet->getHighestRow());
+            for ($row = $layout['data_start']; $row <= $highest; $row++) {
+                $date = $this->parseBsDate($this->text($sheet, $layout['date_col'], $row));
+                if ($date === null) {
                     continue;
                 }
 
-                [$col, $row] = $blocks[$generator];
-                $summary = $this->readSummary($sheet, $col, $row);
-                $days[] = [
-                    'generator' => $generator,
-                    'date' => $date,
-                    'total_running' => $summary['total_running'],
-                    'total_outage' => $summary['total_outage'],
-                    'initial_reading' => $summary['initial_reading'],
-                    'final_reading' => $summary['final_reading'],
-                    'total_generation_kwh' => $summary['total_generation_kwh'],
-                    'company' => $sheetCompany,
-                    'month_label' => substr($date, 0, 7),
-                ];
+                foreach ([1, 2] as $unit) {
+                    $cols = $layout['units'][$unit] ?? null;
+                    if ($cols === null) {
+                        continue;
+                    }
 
-                foreach ($this->readEvents($sheet, $col, $row) as $event) {
-                    $event['generator'] = $generator;
-                    $event['date'] = $date;
-                    $events[] = $event;
+                    $initial = $this->number($sheet, $cols['initial'], $row);
+                    $final = $this->number($sheet, $cols['final'], $row);
+                    $generation = $this->number($sheet, $cols['generation'], $row);
+                    if ($generation === null && $initial !== null && $final !== null) {
+                        $generation = round($final - $initial, 3);
+                    }
+
+                    // Skip completely empty unit rows (no readings and no generation).
+                    if ($initial === null && $final === null && ($generation === null || $generation === 0.0)) {
+                        continue;
+                    }
+
+                    $key = $unit . '|' . $date;
+                    if (isset($seen[$key])) {
+                        continue;
+                    }
+                    $seen[$key] = true;
+
+                    $days[] = [
+                        'generator' => $unit,
+                        'date' => $date,
+                        'total_running' => null,
+                        'total_outage' => null,
+                        'initial_reading' => $initial,
+                        'final_reading' => $final,
+                        'total_generation_kwh' => $generation,
+                        'company' => $sheetCompany,
+                        'month_label' => $monthLabel ?: substr($date, 0, 7),
+                    ];
+                    $rowCount++;
                 }
+            }
+
+            if ($rowCount === 0) {
+                $warnings[] = 'Sheet "' . $title . '" had Unit headers but no dated reading rows.';
             }
         }
 
         if ($days === []) {
             throw new GeneratorLogImportException(
-                'No Generator 1 or Generator 2 blocks were found for Generator Meter Import.',
+                'No Unit 1 / Unit 2 generator meter rows were found.',
                 [
-                    'Each day sheet should have GENERATOR-1 and GENERATOR-2 at the bottom.',
-                    'Columns: S.NO, TO, RESUME, SYNCH, TOTAL OUTAGE, REASON.',
-                    'Totals: TOTAL RUNNING, TOTAL OUTAGE, INITIAL READING, FINAL READING, TOTAL GENERATION.',
+                    'Expected one monthly sheet with DATE, UNIT-1 and UNIT-2 columns.',
+                    'Under each unit: INITIAL READING, FINAL READING, TOTAL GENERATION (KWH).',
+                    'Dates should be BS like 6/1/2083 or 2083-06-01.',
                     $originalFilename ? "File: {$originalFilename}" : null,
                 ]
             );
         }
 
+        usort($days, fn ($a, $b) => [$a['date'], $a['generator']] <=> [$b['date'], $b['generator']]);
+        $dates = array_values(array_unique(array_column($days, 'date')));
         sort($dates);
-        $monthLabel = $dates[0] === $dates[count($dates) - 1]
-            ? $dates[0]
-            : $dates[0] . ' → ' . $dates[count($dates) - 1];
 
         return [
             'days' => $days,
-            'events' => $events,
+            'events' => [],
             'warnings' => $warnings,
             'skipped' => $skipped,
             'company' => $company,
-            'month_label' => $monthLabel,
+            'month_label' => $monthLabel ?: ($dates[0] . ' → ' . $dates[count($dates) - 1]),
         ];
     }
 
     /**
-     * @return array<int, array{0: int, 1: int}>
+     * @return array{
+     *   date_col: int,
+     *   data_start: int,
+     *   units: array<int, array{initial:int, final:int, generation:int}>
+     * }|null
      */
-    private function findGeneratorBlocks(Worksheet $sheet): array
+    private function detectLayout(Worksheet $sheet): ?array
     {
-        $highestRow = min(80, (int) $sheet->getHighestRow());
-        $highestCol = min(60, Coordinate::columnIndexFromString($sheet->getHighestColumn() ?: 'A'));
-        $found = [];
+        $highestRow = min(15, (int) $sheet->getHighestRow());
+        $highestCol = min(30, Coordinate::columnIndexFromString($sheet->getHighestColumn() ?: 'A'));
+
+        $unitStarts = [];
+        $dateCol = null;
+        $headerRow = null;
 
         for ($row = 1; $row <= $highestRow; $row++) {
             for ($col = 1; $col <= $highestCol; $col++) {
-                $label = strtoupper(str_replace([' ', '_'], '', (string) $this->text($sheet, $col, $row)));
-                if ($label === 'GENERATOR-1' || $label === 'GENERATOR1') {
-                    $found[1] = [$col, $row];
+                $label = $this->norm($this->text($sheet, $col, $row));
+                if ($label === 'date') {
+                    $dateCol = $col;
+                    $headerRow = $row;
                 }
-                if ($label === 'GENERATOR-2' || $label === 'GENERATOR2') {
-                    $found[2] = [$col, $row];
+                if (preg_match('/^(unit|unut)[-_ ]?1$/', $label) || $label === 'unit1' || $label === 'unut1') {
+                    $unitStarts[1] = $col;
+                    $headerRow = $headerRow ?: $row;
                 }
-
-                $serial = strtoupper(str_replace([' ', '_'], '', (string) $this->text($sheet, $col, $row)));
-                $to = strtoupper((string) $this->text($sheet, $col + 1, $row));
-                if (($serial === 'S.NO.' || $serial === 'S.NO' || $serial === 'SNO') && str_contains($to, 'TO')) {
-                    $title = strtoupper(str_replace([' ', '_'], '', (string) $this->text($sheet, $col, $row - 1)));
-                    $generator = str_contains($title, '2') ? 2 : ($col >= 15 ? 2 : 1);
-                    $found[$generator] = $found[$generator] ?? [$col, $row - 1];
+                if (preg_match('/^(unit|unut)[-_ ]?2$/', $label) || $label === 'unit2' || $label === 'unut2') {
+                    $unitStarts[2] = $col;
+                    $headerRow = $headerRow ?: $row;
                 }
             }
         }
 
-        return $found;
-    }
-
-    private function sheetDate(Worksheet $sheet): ?string
-    {
-        $title = trim($sheet->getTitle());
-        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $title, $match) && $this->isBsDate($match[1], $match[2], $match[3])) {
-            return sprintf('%04d-%02d-%02d', $match[1], $match[2], $match[3]);
+        if ($dateCol === null || $unitStarts === [] || $headerRow === null) {
+            return null;
         }
 
-        $raw = (string) $this->text($sheet, 1, 2);
-        if (preg_match('/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/', $raw, $match) && $this->isBsDate($match[3], $match[2], $match[1])) {
-            return sprintf('%04d-%02d-%02d', $match[3], $match[2], $match[1]);
+        $subHeaderRow = $headerRow + 1;
+        $units = [];
+        foreach ($unitStarts as $unit => $startCol) {
+            $endCol = ($unit === 1 && isset($unitStarts[2]))
+                ? $unitStarts[2] - 1
+                : min($startCol + 8, $highestCol);
+
+            $map = ['initial' => null, 'final' => null, 'generation' => null];
+            for ($col = $startCol; $col <= $endCol; $col++) {
+                $label = $this->norm($this->text($sheet, $col, $subHeaderRow));
+                if ($label === '') {
+                    continue;
+                }
+                if (str_contains($label, 'initial') && $map['initial'] === null) {
+                    $map['initial'] = $col;
+                } elseif (str_contains($label, 'final') && $map['final'] === null) {
+                    $map['final'] = $col;
+                } elseif (
+                    (str_contains($label, 'total') && str_contains($label, 'generation'))
+                    || (str_contains($label, 'generation') && str_contains($label, 'kwh'))
+                    || $label === 'totalgeneration'
+                ) {
+                    $map['generation'] = $col;
+                }
+            }
+
+            // Fallback to the sample layout offsets if sub-headers are merged oddly.
+            if ($map['initial'] === null) {
+                $map['initial'] = $startCol;
+            }
+            if ($map['final'] === null) {
+                $map['final'] = $startCol + 2;
+            }
+            if ($map['generation'] === null) {
+                $map['generation'] = $startCol + 4;
+            }
+
+            $units[$unit] = $map;
+        }
+
+        return [
+            'date_col' => $dateCol,
+            'data_start' => $subHeaderRow + 1,
+            'units' => $units,
+        ];
+    }
+
+    private function monthFromTitle(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (preg_match('/\((\d{4})-(\d{2})\)/', $value, $m)) {
+            return $m[1] . '-' . $m[2];
+        }
+        if (preg_match('/\b(\d{4})-(\d{2})\b/', $value, $m)) {
+            return $m[1] . '-' . $m[2];
         }
 
         return null;
     }
 
-    private function isBsDate(string $year, string $month, string $day): bool
+    private function parseBsDate(?string $value): ?string
     {
-        $year = (int) $year;
-        $month = (int) $month;
-        $day = (int) $day;
+        if ($value === null) {
+            return null;
+        }
+        $value = trim($value);
 
-        return $year >= 2000 && $year <= 2200 && $month >= 1 && $month <= 12 && $day >= 1 && $day <= 32;
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $value, $m) && $this->isBsDate($m[1], $m[2], $m[3])) {
+            return sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]);
+        }
+        if (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $value, $m)) {
+            // Prefer M/D/YYYY (sample sheet uses 6/1/2083), then D/M/YYYY.
+            if ($this->isBsDate($m[3], $m[1], $m[2])) {
+                return sprintf('%04d-%02d-%02d', $m[3], $m[1], $m[2]);
+            }
+            if ($this->isBsDate($m[3], $m[2], $m[1])) {
+                return sprintf('%04d-%02d-%02d', $m[3], $m[2], $m[1]);
+            }
+        }
+
+        return null;
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function readEvents(Worksheet $sheet, int $startCol, int $titleRow): array
+    private function isBsDate(string|int $y, string|int $m, string|int $d): bool
     {
-        $events = [];
-        for ($offset = 2; $offset <= 10; $offset++) {
-            $row = $titleRow + $offset;
-            $serialRaw = $this->text($sheet, $startCol, $row);
-            if ($serialRaw === null || !preg_match('/^\d+$/', $serialRaw)) {
-                break;
-            }
+        $y = (int) $y;
+        $m = (int) $m;
+        $d = (int) $d;
 
-            $tripTo = $this->time($sheet, $startCol + 1, $row);
-            $resume = $this->time($sheet, $startCol + 2, $row);
-            $synch = $this->time($sheet, $startCol + 3, $row);
-            $outage = $this->time($sheet, $startCol + 4, $row);
-            $reason = $this->text($sheet, $startCol + 5, $row);
-
-            $hasTime = $tripTo || $resume || $synch;
-            $hasOutage = $outage && $outage !== '0:00:00';
-            if (!$hasTime && !$hasOutage && $reason === null) {
-                continue;
-            }
-
-            $events[] = [
-                'serial' => (int) $serialRaw,
-                'trip_to' => $tripTo,
-                'resume_hrs' => $resume,
-                'synch_hrs' => $synch,
-                'outage_hrs' => $outage,
-                'reason' => $reason,
-            ];
-        }
-
-        return $events;
+        return $y >= 2000 && $y <= 2200 && $m >= 1 && $m <= 12 && $d >= 1 && $d <= 32;
     }
 
-    /**
-     * @return array{
-     *   total_running: ?string,
-     *   total_outage: ?string,
-     *   initial_reading: ?float,
-     *   final_reading: ?float,
-     *   total_generation_kwh: ?float
-     * }
-     */
-    private function readSummary(Worksheet $sheet, int $startCol, int $titleRow): array
+    private function norm(?string $value): string
     {
-        $labelRow = null;
-        for ($row = $titleRow + 1; $row <= $titleRow + 15; $row++) {
-            $label = strtoupper((string) $this->text($sheet, $startCol, $row));
-            if (str_contains($label, 'TOTAL RUNNING')) {
-                $labelRow = $row;
-                break;
-            }
-        }
-
-        if ($labelRow === null) {
-            return [
-                'total_running' => null,
-                'total_outage' => null,
-                'initial_reading' => null,
-                'final_reading' => null,
-                'total_generation_kwh' => null,
-            ];
-        }
-
-        $valueRow = $labelRow + 1;
-        $initial = $this->number($sheet, $startCol + 7, $valueRow);
-        $final = $this->number($sheet, $startCol + 9, $valueRow);
-        $generation = $this->number($sheet, $startCol + 11, $valueRow);
-        if ($generation === null && $initial !== null && $final !== null) {
-            $generation = round($final - $initial, 3);
-        }
-        if ($generation === 0.0 && $initial === null && $final === null) {
-            $generation = null;
-        }
-
-        return [
-            'total_running' => $this->time($sheet, $startCol, $valueRow),
-            'total_outage' => $this->time($sheet, $startCol + 2, $valueRow),
-            'initial_reading' => $initial,
-            'final_reading' => $final,
-            'total_generation_kwh' => $generation,
-        ];
+        return strtolower(preg_replace('/\s+/', '', (string) $value) ?? '');
     }
 
     private function text(Worksheet $sheet, int $col, int $row): ?string
@@ -289,29 +304,6 @@ class GeneratorLogImportService
         $value = trim(preg_replace('/\s+/', ' ', (string) $sheet->getCell(Coordinate::stringFromColumnIndex($col) . $row)->getFormattedValue()) ?? '');
 
         return $value === '' ? null : $value;
-    }
-
-    private function time(Worksheet $sheet, int $col, int $row): ?string
-    {
-        $cell = $sheet->getCell(Coordinate::stringFromColumnIndex($col) . $row);
-        $formatted = trim((string) $cell->getFormattedValue());
-        if ($formatted === '') {
-            return null;
-        }
-
-        if (preg_match('/^(\d{1,3}):(\d{2})(?::(\d{2}))?$/', $formatted, $match)) {
-            return sprintf('%d:%02d:%02d', (int) $match[1], (int) $match[2], (int) ($match[3] ?? 0));
-        }
-
-        $raw = $cell->getValue();
-        if (is_numeric($raw)) {
-            $seconds = (int) round(((float) $raw) * 86400);
-            $seconds = abs($seconds) % 86400;
-
-            return sprintf('%d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
-        }
-
-        return $formatted;
     }
 
     private function number(Worksheet $sheet, int $col, int $row): ?float
@@ -325,17 +317,14 @@ class GeneratorLogImportService
                 $raw = null;
             }
         }
-
         if ($raw === null || $raw === '') {
             return null;
         }
-
         if (is_numeric($raw)) {
-            return round((float) $raw, 3);
+            return round((float) $raw, 4);
         }
-
         $text = str_replace([',', ' '], '', trim((string) $cell->getFormattedValue()));
 
-        return is_numeric($text) ? round((float) $text, 3) : null;
+        return is_numeric($text) ? round((float) $text, 4) : null;
     }
 }
