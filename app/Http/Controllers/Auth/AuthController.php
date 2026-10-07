@@ -22,11 +22,14 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
+            'remember' => 'sometimes|boolean',
         ]);
 
         $credentials = $request->only('email', 'password');
+        $remember = $request->boolean('remember');
 
-        if (auth()->attempt($credentials)) {
+        if (auth()->attempt($credentials, $remember)) {
+            $request->session()->regenerate();
 
             return response()->json(['success' => true]);
         }
@@ -74,6 +77,9 @@ class AuthController extends Controller
 
     public function logout(Request $request){
         Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         if ($request->expectsJson()) {
             return response()->json(['status' => true,'message' => 'Logout successfully'], 200);
         }

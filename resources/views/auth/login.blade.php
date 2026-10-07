@@ -71,6 +71,14 @@
                                         <span id="error_password"  style="color:red;"></span>
                                     </div>
                                 </div>
+                                <div class="col-lg-12">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" value="1" id="remember" name="remember">
+                                        <label class="form-check-label text-dark" for="remember">
+                                            Remember Me
+                                        </label>
+                                    </div>
+                                </div>
                                 <div class="col-lg-12 text-center">
                                     <button type="submit" class="btn w-100 btn-dark">Sign In</button>
                                 </div>
